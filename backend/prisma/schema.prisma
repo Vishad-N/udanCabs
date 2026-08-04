@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String
+  name         String
+  role         String   @default("ADMIN") // SUPER_ADMIN, ADMIN
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Driver {
+  id               String    @id @default(uuid())
+  name             String
+  phone            String    @unique
+  licenseNo        String    @unique
+  emergencyContact String?
+  address          String?
+  licenseExpiry    DateTime?
+  profilePhoto     String?
+  status           String    @default("ACTIVE") // ACTIVE, INACTIVE, ON_TRIP
+  isArchived       Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  vehicles         Vehicle[]
+  bookings         Booking[]
+}
+
+model VehicleCategory {
+  id          String          @id @default(uuid())
+  name        String          @unique // e.g., Sedan, SUV, Innova, Traveller
+  description String?
+  vehicles    Vehicle[]
+  pricing     VehiclePricing?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Vehicle {
+  id              String          @id @default(uuid())
+  name            String? // e.g. Maruti Dzire, Toyota Innova Crysta
+  plateNumber     String          @unique // Registration Number
+  make            String
+  model           String
+  year            Int
+  seatingCapacity Int?
+  fuelType        String? // PETROL, DIESEL, CNG, EV
+  transmission    String? // MANUAL, AUTOMATIC
+  acAvailable     Boolean         @default(true)
+  luggageCapacity Int? // Number of bags
+  images          String[]        @default([])
+  status          String          @default("ACTIVE") // ACTIVE, MAINTENANCE, INACTIVE
+  isArchived      Boolean         @default(false)
+  driverId        String?
+  driver          Driver?         @relation(fields: [driverId], references: [id])
+  categoryId      String
+  category        VehicleCategory @relation(fields: [categoryId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model VehiclePricing {
+  id             String          @id @default(uuid())
+  categoryId     String          @unique
+  category       VehicleCategory @relation(fields: [categoryId], references: [id])
+  basePrice      Float           // Base Fare
+  includedKm     Float?          // Included KM in Base Fare
+  pricePerKm     Float           // Price Per KM after base
+  pricePerMinute Float?          // Time-based fee if any
+  minFare        Float?          // Minimum Fare
+  waitingCharge  Float?          // Waiting Charge per hour/min
+  nightCharge    Float?          // Night Charge percentage or fixed fee
+  status         String          @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Booking {
+  id              String         @id @default(uuid())
+  bookingNumber   String         @unique // e.g. UC-20260727-0001
+  bookingType     String         @default("CAB") // CAB, AIRPORT_TRANSFER, TOUR, RENTAL
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  pickupLocation  String?
+  dropoffLocation String?
+  pickupDate      String?
+  pickupTime      String?
+  passengers      Int?
+  vehicleCategory String?        // e.g. Sedan, SUV, Innova, Traveller
+  flightNumber    String?
+  tourPackageId   String?
+  tourPackage     TourPackage?   @relation(fields: [tourPackageId], references: [id])
+  rentalVehicleId String?
+  rentalVehicle   RentalVehicle? @relation(fields: [rentalVehicleId], references: [id])
+  rentalDuration  String?        // e.g. "2 Days" or "5 Hours"
+  licenseNumber   String?        // for rentals
+  notes           String?
+  status          String         @default("PENDING") // PENDING, CONFIRMED, DRIVER_ASSIGNED, DRIVER_ON_THE_WAY, TRIP_STARTED, COMPLETED, CANCELLED
+  timeline        String         @default("[]") // JSON string of timeline events
+  totalFare       Float?
+  pickupAddress        String?
+  pickupLatitude       Float?
+  pickupLongitude      Float?
+  destinationAddress   String?
+  destinationLatitude  Float?
+  destinationLongitude Float?
+  distance             Float?   // in KM
+  estimatedDuration    String?  // e.g., "18 Minutes"
+  estimatedFare        Float?
+  pricingSnapshot      String?  // JSON string of vehicle pricing snapshot at time of booking
+  routePolyline        String?  // Encoded polyline or JSON coordinates
+  driverId        String?
+  driver          Driver?        @relation(fields: [driverId], references: [id])
+  isArchived      Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model TourPackage {
+  id               String    @id @default(uuid())
+  name             String
+  description      String
+  durationDays     Int
+  duration         String? // e.g., "2 Days / 1 Night"
+  coverImage       String?
+  galleryImages    String[]  @default([])
+  itinerary        String? // JSON or formatted string
+  pickupPoint      String?
+  includedServices String[]  @default([])
+  excludedServices String[]  @default([])
+  price            Float     // Default/base price
+  sedanPrice       Float?    // Sedan Price
+  suvPrice         Float?    // SUV Price
+  innovaPrice      Float?    // Innova Price
+  travellerPrice   Float?    // Traveller Price
+  isActive         Boolean   @default(true)
+  status           String    @default("ACTIVE") // ACTIVE, INACTIVE
+  isArchived       Boolean   @default(false)
+  bookings         Booking[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model RentalVehicle {
+  id              String    @id @default(uuid())
+  name            String?   // e.g. Honda Activa 6G, Royal Enfield Classic 350
+  type            String    @default("TWO_WHEELER") // TWO_WHEELER
+  make            String    // Brand
+  brand           String?   // Brand synonym
+  model           String
+  plateNumber     String    @unique
+  dailyRate       Float     // Daily Rental Price
+  securityDeposit Float?    // Security Deposit
+  description     String?
+  fuelType        String?   // PETROL, EV
+  engineCapacity  String?   // e.g. 110cc, 350cc
+  images          String[]  @default([])
+  status          String    @default("AVAILABLE") // AVAILABLE, RENTED, MAINTENANCE
+  isArchived      Boolean   @default(false)
+  bookings        Booking[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model WebsiteSettings {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
