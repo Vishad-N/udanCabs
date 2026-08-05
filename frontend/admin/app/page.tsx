@@ -4,15 +4,15 @@ import React from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarCheck, Users, Car, MapPin, Bike, ArrowRight, ShieldCheck, Clock, CheckCircle2, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
-import api from '@/lib/axios';
+import { dashboardApi } from '@/lib/api';
 
 export default function DashboardHome() {
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
       try {
-        const res = await api.get('/settings/statistics');
-        return res.data?.data || {};
+        const res = await dashboardApi.getStatistics();
+        return res.data || {};
       } catch {
         return {
           totalBookings: 0,

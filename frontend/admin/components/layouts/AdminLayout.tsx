@@ -18,6 +18,7 @@ import {
   Search,
   ChevronRight,
   ShieldAlert,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -53,6 +54,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Tour Packages', href: '/tours', icon: MapPin },
     { name: 'Two Wheeler Rentals', href: '/rentals', icon: Bike },
     { name: 'Website Settings', href: '/settings', icon: Settings },
+    { name: 'Audit Logs', href: '/audit', icon: FileText },
   ];
 
   const currentPage = navItems.find((i) => i.href === pathname) || { name: 'Admin Dashboard' };

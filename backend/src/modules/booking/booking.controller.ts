@@ -18,6 +18,7 @@ import {
   UpdateBookingDto,
   UpdateBookingStatusDto,
   BookingQueryDto,
+  CancelPublicBookingDto,
 } from './dto/booking.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -40,6 +41,13 @@ export class BookingController {
   @ApiResponse({ status: 200, description: 'Matching bookings and timeline history' })
   track(@Param('identifier') identifier: string) {
     return this.bookingService.findByNumberOrPhone(identifier);
+  }
+
+  @Post('cancel-public')
+  @ApiOperation({ summary: 'Cancel booking securely from client interface (Public)' })
+  @ApiResponse({ status: 200, description: 'Booking cancelled successfully' })
+  cancelPublic(@Body() cancelPublicBookingDto: CancelPublicBookingDto) {
+    return this.bookingService.cancelPublic(cancelPublicBookingDto);
   }
 
   @Get()

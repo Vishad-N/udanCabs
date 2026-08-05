@@ -15,9 +15,19 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { HealthModule } from './modules/health/health.module';
 import { MapsModule } from './modules/maps/maps.module';
+import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
+import { TimelineModule } from './modules/timeline/timeline.module';
+import { DispatchModule } from './modules/dispatch/dispatch.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     ServeStaticModule.forRoot({
       rootPath: path.join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
@@ -34,6 +44,11 @@ import { MapsModule } from './modules/maps/maps.module';
     UploadModule,
     HealthModule,
     MapsModule,
+    WhatsAppModule,
+    TimelineModule,
+    DispatchModule,
+    AuditModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

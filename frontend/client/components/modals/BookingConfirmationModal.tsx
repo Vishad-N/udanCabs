@@ -32,8 +32,8 @@ export function BookingConfirmationModal({ isOpen, onClose, booking }: BookingCo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in-0">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-card border border-border/60 p-6 sm:p-8 shadow-2xl text-card-foreground my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-in fade-in-0">
+      <div className="relative w-full max-w-2xl rounded-3xl bg-card border border-border/60 p-6 sm:p-8 shadow-2xl text-card-foreground max-h-[95vh] overflow-y-auto">
         
         {/* Success Header Animation */}
         <div className="flex flex-col items-center text-center pb-6 border-b border-border/40">

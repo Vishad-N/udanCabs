@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, MapPin, Calendar, Clock, Car, Phone, User, CheckCircle2, Circle, AlertCircle, Loader2, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, Car, Phone, User, CheckCircle2, Circle, AlertCircle, Loader2, ArrowRight, ShieldCheck, Printer, XCircle } from 'lucide-react';
 import { bookingApi } from '@/lib/api';
 
 function TrackBookingContent() {
@@ -23,7 +23,8 @@ function TrackBookingContent() {
     setErrorMsg(null);
     try {
       const res = await bookingApi.track(searchVal);
-      const list = res?.data ?? res;
+      const responseData = res?.data ?? res;
+      const list = responseData?.data ?? responseData;
       if (Array.isArray(list) && list.length > 0) {
         setBookings(list);
       } else {
@@ -38,6 +39,20 @@ function TrackBookingContent() {
     }
   };
 
+  const handleCancel = async (booking: any) => {
+    if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) return;
+    try {
+      await bookingApi.cancelPublic({
+        bookingNumber: booking.bookingNumber,
+        customerPhone: booking.customerPhone,
+      });
+      alert('Booking cancelled successfully.');
+      handleSearch(query);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to cancel booking.');
+    }
+  };
+
   useEffect(() => {
     if (initialId) {
       handleSearch(initialId);
@@ -49,7 +64,7 @@ function TrackBookingContent() {
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Header */}
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3 print:hidden">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             <ShieldCheck size={14} /> LIVE BOOKING TRACKER
           </div>
@@ -57,12 +72,12 @@ function TrackBookingContent() {
             Track Your <span className="text-primary">Journey</span>
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
-            Enter your Booking Number (e.g. UC-20260727-0001) or Registered Mobile Number to check real-time trip status and dispatch timeline.
+            Enter your Booking Number (e.g. UC-20260727-0001) or Registered Mobile Number to check real-time trip status, download receipt, or cancel your booking.
           </p>
         </div>
 
         {/* Search Input Box */}
-        <div className="max-w-2xl mx-auto rounded-3xl bg-card border border-border/60 p-4 sm:p-6 shadow-xl">
+        <div className="max-w-2xl mx-auto rounded-3xl bg-card border border-border/60 p-4 sm:p-6 shadow-xl print:hidden">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -135,10 +150,29 @@ function TrackBookingContent() {
 
                   <div className="flex items-center gap-3">
                     <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                      <span className="h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                      <span className="h-2 w-2 rounded-full bg-primary animate-pulse print:hidden"></span>
                       {booking.status || 'PENDING'}
                     </span>
                   </div>
+                </div>
+
+                <div className="px-6 pt-4 pb-2 flex flex-wrap gap-2 print:hidden border-b border-border/40 bg-card">
+                   <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-xs font-bold text-secondary-foreground hover:bg-secondary/80 transition-colors">
+                     <Printer size={14} /> Download Receipt
+                   </button>
+                   {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+                     <button onClick={() => handleCancel(booking)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive/20 transition-colors">
+                       <XCircle size={14} /> Cancel Booking
+                     </button>
+                   )}
+                   {booking.assignedDriver && (
+                     <a href={`tel:${booking.assignedDriver.phone}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-bold hover:bg-green-500/20 transition-colors">
+                       <Phone size={14} /> Call Driver
+                     </a>
+                   )}
+                   <a href={`tel:919876543210`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors">
+                     <Phone size={14} /> Call Office
+                   </a>
                 </div>
 
                 {/* Card Body */}
@@ -157,6 +191,14 @@ function TrackBookingContent() {
                       <p className="text-xs text-muted-foreground">
                         Category: <span className="font-medium text-foreground">{booking.vehicleCategory || 'Sedan'}</span>
                       </p>
+                      <p className="text-xs text-muted-foreground">
+                        Total Fare: <span className="font-medium text-foreground">₹{booking.totalFare || booking.estimatedFare}</span>
+                      </p>
+                      {booking.paymentMethod && (
+                        <p className="text-xs text-muted-foreground">
+                          Payment: <span className="font-medium text-foreground">{booking.paymentMethod}</span>
+                        </p>
+                      )}
                       {booking.passengers && (
                         <p className="text-xs text-muted-foreground">Passengers: {booking.passengers}</p>
                       )}
@@ -176,12 +218,27 @@ function TrackBookingContent() {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-primary block">
                         Assigned Driver & Fleet
                       </span>
-                      <p className="text-xs font-semibold text-foreground">
-                        {booking.driver ? `${booking.driver.name} (${booking.driver.phone})` : 'Driver assignment in progress...'}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {booking.driver ? 'Vehicle dispatched and ready' : 'You will receive driver details once confirmed by dispatch.'}
-                      </p>
+                      {booking.assignedDriver ? (
+                        <>
+                          <p className="text-xs font-semibold text-foreground">
+                            {booking.assignedDriver.name} ({booking.assignedDriver.phone})
+                          </p>
+                          <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                            {booking.assignedVehicle 
+                              ? `${booking.assignedVehicle.make} ${booking.assignedVehicle.model} • ${booking.assignedVehicle.plateNumber.toUpperCase()}` 
+                              : 'Vehicle dispatched'}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs font-semibold text-foreground">
+                            Assignment in progress...
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            You will receive driver details once confirmed by dispatch.
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -226,24 +283,27 @@ function TrackBookingContent() {
                     <div className="space-y-4">
                       {booking.timeline && booking.timeline.length > 0 ? (
                         booking.timeline.map((item: any, idx: number) => {
+                          const title = item.event || item.title || item.status;
+                          const timestamp = item.createdAt || item.timestamp;
+                          const note = item.remarks || item.note;
                           const isLast = idx === booking.timeline.length - 1;
                           return (
                             <div key={idx} className="flex items-start gap-3 relative">
                               {!isLast && (
-                                <span className="absolute left-2.5 top-6 bottom-0 w-0.5 bg-primary/30"></span>
+                                <span className="absolute left-2.5 top-6 -bottom-4 w-0.5 bg-primary/30"></span>
                               )}
                               <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                                 {isLast ? <CheckCircle2 size={14} /> : <Circle size={10} className="fill-current" />}
                               </div>
                               <div className="flex-1 text-xs space-y-0.5">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-bold text-foreground">{item.title || item.status}</span>
+                                  <span className="font-bold text-foreground">{title}</span>
                                   <span className="text-[10px] text-muted-foreground">
-                                    {item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                    {timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                   </span>
                                 </div>
-                                {item.note && (
-                                  <p className="text-muted-foreground text-[11px] leading-relaxed">{item.note}</p>
+                                {note && (
+                                  <p className="text-muted-foreground text-[11px] leading-relaxed">{note}</p>
                                 )}
                               </div>
                             </div>

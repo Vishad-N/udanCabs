@@ -177,6 +177,16 @@ export class CreateBookingDto {
   @IsString()
   @IsOptional()
   routePolyline?: string;
+
+  @ApiPropertyOptional({ example: 'CASH_TO_DRIVER' })
+  @IsString()
+  @IsOptional()
+  paymentMethod?: string;
+
+  @ApiPropertyOptional({ example: 'PENDING' })
+  @IsString()
+  @IsOptional()
+  paymentStatus?: string;
 }
 
 export class UpdateBookingDto extends PartialType(CreateBookingDto) {
@@ -233,4 +243,16 @@ export class BookingQueryDto {
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10) || 10)
   limit?: number = 10;
+}
+
+export class CancelPublicBookingDto {
+  @ApiProperty({ example: 'UC-20260727-0001' })
+  @IsString()
+  @IsNotEmpty()
+  bookingNumber: string;
+
+  @ApiProperty({ example: '+91 9876543210' })
+  @IsString()
+  @IsNotEmpty()
+  customerPhone: string;
 }

@@ -3,16 +3,17 @@ import Image from "next/image";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_LINKS = [
-  { name: "Services", href: "#services" },
-  { name: "Destinations", href: "#destinations" },
-  { name: "Spiritual", href: "#spiritual" },
-  { name: "Fleet", href: "#fleet" },
+  { name: "Track Ride", href: "/track" },
+  { name: "Services", href: "/#services" },
+  { name: "Destinations", href: "/#destinations" },
+  { name: "Spiritual", href: "/#spiritual" },
+  { name: "Fleet", href: "/#fleet" },
 ];
 
 export function Navbar() {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/60 backdrop-blur-md">
-      <div className="container mx-auto flex h-20 items-center justify-between px-6">
+    <header className="navbar mobile-header fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/60 backdrop-blur-md">
+      <div className="container mx-auto flex md:h-20 h-[58px] items-center justify-between px-6">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
             <Image
@@ -43,7 +44,7 @@ export function Navbar() {
             href="#download"
             className="hidden sm:inline-flex h-10 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            App Download
+            Download App
           </Link>
         </div>
       </div>

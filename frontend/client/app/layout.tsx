@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
-import { Inter, Josefin_Sans } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-});
-
-const josefinSans = Josefin_Sans({
-  variable: "--font-josefin",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 import { Providers } from "./providers";
 import { Navbar } from "@/components/navigation/Navbar";
 import { Footer } from "@/components/navigation/Footer";
+import { MobileBottomNavigation } from "@/components/navigation/MobileBottomNavigation";
+import { SubtleGrain } from "@/components/decorative/SubtleGrain";
 
 export const metadata: Metadata = {
   title: "Udan Cabs",
@@ -30,15 +29,17 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${josefinSans.variable} h-full antialiased font-sans transition-colors duration-300`}
+      className={`${montserrat.variable} h-full antialiased font-sans transition-colors duration-300`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>
+          <SubtleGrain />
           <Navbar />
           <main className="flex-1 pt-20">
             {children}
           </main>
           <Footer />
+          <MobileBottomNavigation />
         </Providers>
       </body>
     </html>

@@ -1,28 +1,46 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { TimelineService } from '../timeline/timeline.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import {
   CreateBookingDto,
   UpdateBookingDto,
   UpdateBookingStatusDto,
   BookingQueryDto,
   BookingStatusEnum,
+  CancelPublicBookingDto,
 } from './dto/booking.dto';
 import { Prisma } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class BookingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private timelineService: TimelineService,
+    private whatsappService: WhatsAppService
+  ) {}
 
   private parseBooking(booking: any) {
     if (!booking) return booking;
-    try {
-      return {
-        ...booking,
-        timeline: typeof booking.timeline === 'string' ? JSON.parse(booking.timeline) : booking.timeline || [],
-      };
-    } catch {
-      return { ...booking, timeline: [] };
-    }
+    const { timelines, ...rest } = booking;
+    return {
+      ...rest,
+      timeline: timelines || [],
+    };
+  }
+
+  private get commonIncludes() {
+    return {
+      tourPackage: true,
+      rentalVehicle: true,
+      driver: true,
+      assignedDriver: true,
+      assignedVehicle: true,
+      timelines: {
+        orderBy: { createdAt: 'asc' as Prisma.SortOrder },
+      },
+    };
   }
 
   async generateBookingNumber(): Promise<string> {
@@ -57,15 +75,6 @@ export class BookingService {
 
   async create(createBookingDto: CreateBookingDto) {
     const bookingNumber = await this.generateBookingNumber();
-    
-    const initialTimeline = [
-      {
-        status: BookingStatusEnum.PENDING,
-        title: 'Booking Created',
-        timestamp: new Date().toISOString(),
-        note: createBookingDto.notes || 'Customer submitted booking request',
-      },
-    ];
 
     const data: Prisma.BookingCreateInput = {
       bookingNumber,
@@ -95,8 +104,9 @@ export class BookingService {
       estimatedFare: createBookingDto.estimatedFare || createBookingDto.totalFare,
       pricingSnapshot: createBookingDto.pricingSnapshot,
       routePolyline: createBookingDto.routePolyline,
+      paymentMethod: createBookingDto.paymentMethod,
+      paymentStatus: createBookingDto.paymentStatus || 'PENDING',
       status: BookingStatusEnum.PENDING,
-      timeline: JSON.stringify(initialTimeline),
     };
 
     if (createBookingDto.tourPackageId) {
@@ -109,14 +119,24 @@ export class BookingService {
 
     const saved = await this.prisma.booking.create({
       data,
-      include: {
-        tourPackage: true,
-        rentalVehicle: true,
-        driver: true,
-      },
     });
 
-    return this.parseBooking(saved);
+    // Create initial timeline event
+    await this.timelineService.addEvent(
+      saved.id,
+      'Booking Created',
+      createBookingDto.notes || 'Customer submitted booking request'
+    );
+
+    const fullBooking = await this.prisma.booking.findUnique({
+      where: { id: saved.id },
+      include: this.commonIncludes,
+    });
+
+    // Notify Business Owner
+    await this.whatsappService.notifyBusinessOwnerNewBooking(fullBooking);
+
+    return this.parseBooking(fullBooking);
   }
 
   async findAll(query: BookingQueryDto) {
@@ -153,11 +173,7 @@ export class BookingService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
-          tourPackage: true,
-          rentalVehicle: true,
-          driver: true,
-        },
+        include: this.commonIncludes,
       }),
       this.prisma.booking.count({ where }),
     ]);
@@ -183,11 +199,7 @@ export class BookingService {
           { isArchived: false },
         ],
       },
-      include: {
-        tourPackage: true,
-        rentalVehicle: true,
-        driver: true,
-      },
+      include: this.commonIncludes,
     });
 
     if (!booking) {
@@ -216,42 +228,89 @@ export class BookingService {
         ],
       },
       orderBy: { createdAt: 'desc' },
-      include: {
-        tourPackage: true,
-        rentalVehicle: true,
-        driver: true,
-      },
+      include: this.commonIncludes,
     });
 
     return { data: bookings.map((b) => this.parseBooking(b)) };
   }
 
+  async cancelPublic(dto: CancelPublicBookingDto) {
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        bookingNumber: dto.bookingNumber,
+        customerPhone: dto.customerPhone,
+        isArchived: false,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found with provided credentials');
+    }
+
+    if (booking.status !== BookingStatusEnum.PENDING && booking.status !== BookingStatusEnum.CONFIRMED) {
+      throw new BadRequestException('Booking cannot be cancelled at this stage. Please contact office.');
+    }
+
+    const saved = await this.prisma.booking.update({
+      where: { id: booking.id },
+      data: {
+        status: BookingStatusEnum.CANCELLED,
+      },
+      include: this.commonIncludes,
+    });
+
+    await this.timelineService.addEvent(
+      booking.id,
+      'Booking Cancelled',
+      'Customer cancelled the booking from the website'
+    );
+
+    if (booking.assignedDriverId) {
+      await this.prisma.driver.update({ where: { id: booking.assignedDriverId }, data: { status: 'ACTIVE' } });
+    }
+    if (booking.assignedVehicleId) {
+      await this.prisma.vehicle.update({ where: { id: booking.assignedVehicleId }, data: { status: 'ACTIVE' } });
+    }
+
+    if ((this.whatsappService as any).notifyCustomerCancellation) {
+      await (this.whatsappService as any).notifyCustomerCancellation(saved);
+    }
+
+    return this.parseBooking(saved);
+  }
+
   async updateStatus(id: string, dto: UpdateBookingStatusDto) {
     const booking = await this.findOne(id);
-
-    const newEvent = {
-      status: dto.status,
-      title: `Status updated to ${dto.status}`,
-      timestamp: new Date().toISOString(),
-      note: dto.note || `Booking status changed from ${booking.status} to ${dto.status}`,
-    };
-
-    const updatedTimeline = [...(booking.timeline || []), newEvent];
 
     const saved = await this.prisma.booking.update({
       where: { id: booking.id },
       data: {
         status: dto.status,
-        timeline: JSON.stringify(updatedTimeline),
       },
-      include: {
-        tourPackage: true,
-        rentalVehicle: true,
-        driver: true,
-      },
+      include: this.commonIncludes,
     });
 
-    return this.parseBooking(saved);
+    if (dto.status === BookingStatusEnum.COMPLETED || dto.status === BookingStatusEnum.CANCELLED) {
+      if (booking.assignedDriverId) {
+        await this.prisma.driver.update({ where: { id: booking.assignedDriverId }, data: { status: 'ACTIVE' } });
+      }
+      if (booking.assignedVehicleId) {
+        await this.prisma.vehicle.update({ where: { id: booking.assignedVehicleId }, data: { status: 'ACTIVE' } });
+      }
+    }
+
+    await this.timelineService.addEvent(
+      booking.id,
+      `Status updated to ${dto.status}`,
+      dto.note || `Booking status changed from ${booking.status} to ${dto.status}`
+    );
+
+    const finalBooking = await this.prisma.booking.findUnique({
+      where: { id: booking.id },
+      include: this.commonIncludes,
+    });
+
+    return this.parseBooking(finalBooking);
   }
 
   async update(id: string, updateBookingDto: UpdateBookingDto) {
@@ -266,11 +325,7 @@ export class BookingService {
     const saved = await this.prisma.booking.update({
       where: { id: booking.id },
       data,
-      include: {
-        tourPackage: true,
-        rentalVehicle: true,
-        driver: true,
-      },
+      include: this.commonIncludes,
     });
 
     return this.parseBooking(saved);

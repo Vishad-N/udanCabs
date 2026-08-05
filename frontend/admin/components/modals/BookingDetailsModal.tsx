@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, User, Phone, Mail, MapPin, Calendar, Clock, Car, CheckCircle2, Circle, AlertCircle, Loader2, Edit3, Send, ShieldAlert, Trash2 } from 'lucide-react';
 import { bookingsApi } from '@/lib/api';
+import { AssignDriverModal } from './AssignDriverModal';
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface BookingDetailsModalProps {
 
 export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: BookingDetailsModalProps) {
   const [loading, setLoading] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(booking?.status || 'PENDING');
   const [note, setNote] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -54,8 +56,8 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: Book
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in-0">
-      <div className="relative w-full max-w-4xl rounded-3xl bg-zinc-900 border border-zinc-800 p-6 sm:p-8 shadow-2xl text-zinc-100 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in-0">
+      <div className="relative w-full max-w-4xl rounded-3xl bg-zinc-900 border border-zinc-800 p-6 sm:p-8 shadow-2xl text-zinc-100 max-h-[95vh] overflow-y-auto custom-scrollbar">
         
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-zinc-800">
@@ -226,11 +228,11 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: Book
                   </button>
 
                   <button
-                    onClick={() => handleStatusUpdate('DRIVER_ASSIGNED')}
-                    disabled={loading || booking.status === 'DRIVER_ASSIGNED'}
+                    onClick={() => setIsAssignModalOpen(true)}
+                    disabled={loading}
                     className="py-2.5 px-3 rounded-xl bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-600/30 text-xs font-bold transition-all disabled:opacity-40"
                   >
-                    Assign Driver
+                    {booking.assignedDriverId ? 'Change Fleet/Driver' : 'Assign Fleet/Driver'}
                   </button>
 
                   <button
@@ -264,6 +266,9 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: Book
               <div className="space-y-5 pt-2">
                 {Array.isArray(booking.timeline) && booking.timeline.length > 0 ? (
                   booking.timeline.map((item: any, idx: number) => {
+                    const title = item.event || item.title || item.status;
+                    const timestamp = item.createdAt || item.timestamp;
+                    const note = item.remarks || item.note;
                     const isLast = idx === booking.timeline.length - 1;
                     return (
                       <div key={idx} className="flex items-start gap-3 relative">
@@ -275,14 +280,14 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: Book
                         </div>
                         <div className="flex-1 text-xs space-y-0.5">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold text-white">{item.title || item.status}</span>
+                            <span className="font-bold text-white">{title}</span>
                             <span className="text-[10px] text-zinc-500">
-                              {item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                              {timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                             </span>
                           </div>
-                          {item.note && (
+                          {note && (
                             <p className="text-zinc-400 text-[11px] leading-relaxed bg-zinc-900/60 p-2 rounded-lg border border-zinc-800/60 mt-1">
-                              {item.note}
+                              {note}
                             </p>
                           )}
                         </div>
@@ -309,6 +314,15 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: Book
         </div>
 
       </div>
+
+      <AssignDriverModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        booking={booking}
+        onSuccess={() => {
+          onUpdate();
+        }}
+      />
     </div>
   );
 }

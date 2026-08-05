@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import { BookingModalProvider } from '@/components/modals/BookingModalProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -25,7 +26,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange={false} // Allow transitions for smooth toggle
     >
       <QueryClientProvider client={queryClient}>
-        {children}
+        <BookingModalProvider>
+          {children}
+        </BookingModalProvider>
       </QueryClientProvider>
     </NextThemesProvider>
   );

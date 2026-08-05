@@ -46,10 +46,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
           status = HttpStatus.NOT_FOUND;
           message = 'Record not found';
         } else {
-          message = exception.message;
+          message = 'Database operation failed';
         }
       } else {
-        message = exception.message;
+        message = 'Internal server error';
       }
     }
 

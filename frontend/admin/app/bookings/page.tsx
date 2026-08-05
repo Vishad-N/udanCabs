@@ -20,9 +20,10 @@ export default function BookingsPage() {
     queryFn: () => bookingsApi.getAll({ search, status, date, page, limit }),
   });
 
-  const rawBookings = data?.data ?? data;
+  const responseData = data?.data || data;
+  const rawBookings = responseData?.data || responseData;
   const bookings = Array.isArray(rawBookings) ? rawBookings : [];
-  const meta = data?.meta || { total: 0, page: 1, totalPages: 1 };
+  const meta = responseData?.meta || { total: 0, page: 1, totalPages: 1 };
 
   const getStatusBadge = (st: string) => {
     switch (st) {
@@ -192,6 +193,18 @@ export default function BookingsPage() {
                       <div className="text-zinc-300 font-medium">{booking.vehicleCategory || 'Sedan'}</div>
                       {booking.passengers && (
                         <div className="text-[10px] text-zinc-500">{booking.passengers} Passengers</div>
+                      )}
+                      {booking.assignedDriver && (
+                        <div className="mt-1.5 flex flex-col gap-0.5">
+                          <span className="text-[10px] text-blue-400 font-semibold bg-blue-500/10 px-1.5 py-0.5 rounded inline-block w-fit">
+                            Driver: {booking.assignedDriver.name}
+                          </span>
+                          {booking.assignedVehicle && (
+                            <span className="text-[10px] text-blue-400 font-semibold bg-blue-500/10 px-1.5 py-0.5 rounded inline-block w-fit">
+                              Vehicle: {booking.assignedVehicle.plateNumber}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </td>
 

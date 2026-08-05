@@ -15,7 +15,15 @@ async function bootstrap() {
   app.use(helmet());
   const compressFn = typeof compression === 'function' ? compression : (compression as any).default;
   if (compressFn) app.use(compressFn());
-  app.enableCors();
+  
+  const allowedOrigins = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',') 
+    : ['http://localhost:3000', 'http://localhost:3001'];
+    
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
 
   // Global prefix
   app.setGlobalPrefix('api/v1');

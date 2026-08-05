@@ -31,7 +31,7 @@ import { LocationAutocomplete, LocationValue } from '@/components/inputs/Locatio
 
 const bookingSchema = z.object({
   customerName: z.string().min(2, 'Name must be at least 2 characters'),
-  customerPhone: z.string().min(10, 'Please enter a valid 10-digit mobile number'),
+  customerPhone: z.string().regex(/^[0-9]{10}$/, 'Please enter a valid 10-digit mobile number'),
   customerEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
   pickupDate: z.string().min(1, 'Travel date is required'),
   pickupTime: z.string().min(1, 'Travel time is required'),
@@ -257,7 +257,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
       const result = await bookingApi.create(payload);
       reset();
       onClose();
-      onSuccess(result);
+      onSuccess(result?.data || result);
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err?.response?.data?.message || 'Failed to submit booking request. Please try again.');
@@ -433,16 +433,16 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                   <p className="text-xs text-muted-foreground">Applying distance formulas, minimum fares & night charges</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
                   {fareEstimates.map((veh) => {
                     const isSelected = selectedVehicle?.categoryId === veh.categoryId;
                     return (
                       <div
                         key={veh.categoryId}
                         onClick={() => setSelectedVehicle(veh)}
-                        className={`cursor-pointer rounded-2xl p-5 border transition-all flex flex-col justify-between relative overflow-hidden ${
+                        className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all flex flex-col relative ${
                           isSelected
-                            ? 'bg-primary/10 border-primary ring-2 ring-primary shadow-lg scale-[1.02]'
+                            ? 'bg-primary/5 border-primary ring-1 ring-primary shadow-lg scale-[1.02] z-10'
                             : 'bg-card border-border/60 hover:border-border hover:bg-secondary/30'
                         }`}
                       >
@@ -451,26 +451,26 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                             <CheckCircle2 className="w-5 h-5 fill-primary text-primary-foreground" />
                           </div>
                         )}
-                        <div>
-                          <div className="flex items-center justify-between pr-6 mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between pr-8 mb-2">
                             <h4 className="font-black text-base text-foreground">{veh.categoryName}</h4>
                             <span className="text-lg font-mono font-black text-amber-500">₹{veh.estimatedFare}</span>
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-4">{veh.categoryDescription}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mb-4 min-h-[32px]">{veh.categoryDescription}</p>
                           
-                          <div className="flex items-center gap-4 text-xs text-zinc-300 font-medium pb-3 border-b border-border/40">
-                            <div className="flex items-center gap-1">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-300 font-medium pb-3 border-b border-border/40">
+                            <div className="flex items-center gap-1.5">
                               <Users className="w-3.5 h-3.5 text-primary" />
                               <span>{veh.seatingCapacity} Seats</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                               <Briefcase className="w-3.5 h-3.5 text-primary" />
                               <span>{veh.luggageCapacity} Bags</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-3 pt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
                           <span>Base: ₹{veh.basePrice} ({veh.includedKm}km incl.)</span>
                           <span>₹{veh.pricePerKm}/km</span>
                         </div>
@@ -500,7 +500,9 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Mobile Number *</label>
                   <input
                     {...register('customerPhone')}
-                    placeholder="e.g. +91 9876543210"
+                    maxLength={10}
+                    onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, ''); }}
+                    placeholder="e.g. 9876543210"
                     className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                   />
                   {errors.customerPhone && <p className="mt-1 text-xs text-destructive">{errors.customerPhone.message}</p>}

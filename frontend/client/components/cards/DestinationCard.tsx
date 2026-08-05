@@ -25,11 +25,11 @@ export function DestinationCard({
     <Link
       href={href}
       className={cn(
-        "group flex flex-col overflow-hidden rounded-3xl bg-card border border-border/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20",
+        "destination-card group flex flex-col overflow-hidden rounded-3xl bg-card border border-border/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20",
         className
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
+      <div className="destination-card__image--fallback relative aspect-[4/3] w-full overflow-hidden">
         <Image
           src={imageSrc}
           alt={title}

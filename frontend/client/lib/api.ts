@@ -40,6 +40,10 @@ export const bookingApi = {
     const response = await api.get(`/bookings/track/${encodeURIComponent(identifier)}`);
     return response.data;
   },
+  cancelPublic: async (payload: { bookingNumber: string; customerPhone: string }) => {
+    const response = await api.post('/bookings/cancel-public', payload);
+    return response.data;
+  },
 };
 
 export const mapsApi = {
@@ -64,6 +68,27 @@ export const pricingApi = {
   },
   getCategories: async () => {
     const response = await api.get('/pricing/public-categories');
+    return response.data;
+  },
+};
+
+export const settingsApi = {
+  getPublic: async () => {
+    const response = await api.get('/settings');
+    return response.data;
+  },
+};
+
+export const tourApi = {
+  getPublic: async () => {
+    const response = await api.get('/tours');
+    return response.data;
+  },
+};
+
+export const rentalApi = {
+  getPublic: async () => {
+    const response = await api.get('/rentals');
     return response.data;
   },
 };

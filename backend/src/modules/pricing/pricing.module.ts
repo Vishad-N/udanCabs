@@ -3,7 +3,7 @@ import { PricingController, PublicPricingController } from './pricing.controller
 import { PricingService } from './pricing.service';
 
 @Module({
-  controllers: [PricingController, PublicPricingController],
+  controllers: [PublicPricingController, PricingController],
   providers: [PricingService],
   exports: [PricingService],
 })

@@ -41,6 +41,13 @@ export class DriverController {
     return this.driverService.findAll(query);
   }
 
+  @Get('available')
+  @ApiOperation({ summary: 'Get all available drivers' })
+  @ApiResponse({ status: 200, description: 'List of available drivers' })
+  findAvailable() {
+    return this.driverService.findAll({ status: 'ACTIVE', limit: 100 });
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get driver by ID' })
   @ApiResponse({ status: 200, description: 'Driver details' })

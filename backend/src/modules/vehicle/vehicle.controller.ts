@@ -41,6 +41,13 @@ export class VehicleController {
     return this.vehicleService.findAll(query);
   }
 
+  @Get('available')
+  @ApiOperation({ summary: 'Get all available vehicles' })
+  @ApiResponse({ status: 200, description: 'List of available vehicles' })
+  findAvailable() {
+    return this.vehicleService.findAll({ status: 'ACTIVE', limit: 100 });
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get vehicle by ID' })
   @ApiResponse({ status: 200, description: 'Vehicle details' })

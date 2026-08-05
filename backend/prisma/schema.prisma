@@ -15,6 +15,7 @@ model Admin {
   refreshToken String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  auditLogs    AuditLog[]
 }
 
 model Driver {
@@ -32,6 +33,10 @@ model Driver {
   updatedAt        DateTime  @updatedAt
   vehicles         Vehicle[]
   bookings         Booking[]
+  assignedBookings Booking[] @relation("AssignedDriver")
+
+  @@index([status])
+  @@index([isArchived])
 }
 
 model VehicleCategory {
@@ -63,8 +68,12 @@ model Vehicle {
   driver          Driver?         @relation(fields: [driverId], references: [id])
   categoryId      String
   category        VehicleCategory @relation(fields: [categoryId], references: [id])
+  assignedBookings Booking[]      @relation("AssignedVehicle")
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+
+  @@index([status])
+  @@index([isArchived])
 }
 
 model VehiclePricing {
@@ -105,7 +114,16 @@ model Booking {
   licenseNumber   String?        // for rentals
   notes           String?
   status          String         @default("PENDING") // PENDING, CONFIRMED, DRIVER_ASSIGNED, DRIVER_ON_THE_WAY, TRIP_STARTED, COMPLETED, CANCELLED
-  timeline        String         @default("[]") // JSON string of timeline events
+  paymentMethod   String?        // CASH_TO_DRIVER, UPI_TO_DRIVER, UPI_TO_OFFICE, PAY_AT_OFFICE
+  paymentStatus   String         @default("PENDING") // PENDING, PAID, REFUNDED
+  timelines       BookingTimeline[]
+  assignedDriverId String?
+  assignedDriver   Driver?       @relation("AssignedDriver", fields: [assignedDriverId], references: [id])
+  assignedVehicleId String?
+  assignedVehicle  Vehicle?      @relation("AssignedVehicle", fields: [assignedVehicleId], references: [id])
+  assignedAt       DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
   totalFare       Float?
   pickupAddress        String?
   pickupLatitude       Float?
@@ -123,6 +141,11 @@ model Booking {
   isArchived      Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+
+  @@index([bookingNumber])
+  @@index([customerPhone])
+  @@index([status])
+  @@index([isArchived])
 }
 
 model TourPackage {
@@ -178,4 +201,26 @@ model WebsiteSettings {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model BookingTimeline {
+  id          String   @id @default(uuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  event       String   // e.g., "Booking Created", "Driver Assigned", "TRIP_STARTED"
+  remarks     String?
+  createdBy   String?  // Admin ID, User ID, or "SYSTEM"
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  adminId       String?
+  admin         Admin?   @relation(fields: [adminId], references: [id])
+  action        String   // e.g. "DRIVER_ASSIGNED", "BOOKING_CANCELLED"
+  entityType    String   // "BOOKING", "DRIVER", "VEHICLE", etc.
+  entityId      String
+  previousValue String?  // JSON string
+  newValue      String?  // JSON string
+  createdAt     DateTime @default(now())
 }
