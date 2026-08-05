@@ -19,7 +19,7 @@ const vehicleSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   seatingCapacity: z.number().min(1).max(60),
   luggageCapacity: z.number().min(0).max(20),
-  status: z.string().default("ACTIVE"),
+  status: z.string(),
   driverId: z.string().optional(),
 });
 

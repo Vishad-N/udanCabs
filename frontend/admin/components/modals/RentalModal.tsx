@@ -16,7 +16,7 @@ const rentalSchema = z.object({
   model: z.string().min(2, "Model is required"),
   plateNumber: z.string().regex(PLATE_REGEX, "Invalid format. Use MP-09-AB-1234 or 21-BH-1234-AA"),
   dailyRate: z.number().min(0),
-  status: z.string().default("AVAILABLE"),
+  status: z.string(),
 });
 
 type RentalFormValues = z.infer<typeof rentalSchema>;

@@ -14,7 +14,7 @@ const driverSchema = z.object({
   licenseNo: z.string().min(10, "Valid license number required"),
   emergencyContact: z.string().optional(),
   address: z.string().optional(),
-  status: z.string().default("ACTIVE"),
+  status: z.string(),
 });
 
 type DriverFormValues = z.infer<typeof driverSchema>;

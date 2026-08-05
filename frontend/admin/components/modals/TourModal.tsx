@@ -14,7 +14,7 @@ const tourSchema = z.object({
   durationDays: z.number().min(1),
   duration: z.string().min(2),
   price: z.number().min(0),
-  status: z.string().default("ACTIVE"),
+  status: z.string(),
 });
 
 type TourFormValues = z.infer<typeof tourSchema>;
