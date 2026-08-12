@@ -55,7 +55,7 @@ export function VehicleSelectionSection() {
     id: cat.id,
     name: cat.name,
     description: cat.description || 'Premium ride with top-class amenities.',
-    baseRate: `₹${cat.baseFare}/km`,
+    baseRate: cat.pricing?.pricePerKm ? `₹${cat.pricing.pricePerKm}/km` : (cat.baseFare ? `₹${cat.baseFare}/km` : 'N/A'),
     features: [`${cat.capacity || 4} Seats`, 'AC', 'Chauffeur'],
     image: cat.imageUrl || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80',
     popular: cat.isPopular || false,

@@ -169,3 +169,30 @@ export const dispatchApi = {
     return res.data;
   },
 };
+
+export const pricingApi = {
+  getCategories: async () => {
+    const res = await api.get('/pricing/categories');
+    return res.data;
+  },
+  createCategory: async (payload: any) => {
+    const res = await api.post('/pricing/categories', payload);
+    return res.data;
+  },
+  getAll: async () => {
+    const res = await api.get('/pricing');
+    return res.data;
+  },
+  create: async (payload: any) => {
+    const res = await api.post('/pricing', payload);
+    return res.data;
+  },
+  update: async (id: string, payload: any) => {
+    const res = await api.patch(`/pricing/${id}`, payload);
+    return res.data;
+  },
+  delete: async (id: string) => {
+    const res = await api.delete(`/pricing/${id}`);
+    return res.data;
+  },
+};

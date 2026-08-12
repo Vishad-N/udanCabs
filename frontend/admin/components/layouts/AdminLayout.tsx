@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ShieldAlert,
   FileText,
+  BadgeDollarSign,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -53,6 +54,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Fleet Vehicles', href: '/vehicles', icon: Car },
     { name: 'Tour Packages', href: '/tours', icon: MapPin },
     { name: 'Two Wheeler Rentals', href: '/rentals', icon: Bike },
+    { name: 'Pricing & Fares', href: '/pricing', icon: BadgeDollarSign },
     { name: 'Website Settings', href: '/settings', icon: Settings },
     { name: 'Audit Logs', href: '/audit', icon: FileText },
   ];
