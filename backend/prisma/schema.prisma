@@ -26,7 +26,8 @@ model Driver {
   emergencyContact String?
   address          String?
   licenseExpiry    DateTime?
-  profilePhoto     String?
+  profilePhoto     String
+  licenseImage     String?
   status           String    @default("ACTIVE") // ACTIVE, INACTIVE, ON_TRIP
   isArchived       Boolean   @default(false)
   createdAt        DateTime  @default(now())

@@ -33,10 +33,15 @@ export class CreateDriverDto {
   @IsOptional()
   address?: string;
 
-  @ApiPropertyOptional({ example: '/uploads/driver-1.jpg' })
+  @ApiProperty({ example: '/uploads/driver-1.jpg' })
+  @IsString()
+  @IsNotEmpty()
+  profilePhoto: string;
+
+  @ApiPropertyOptional({ example: '/uploads/license-1.jpg' })
   @IsString()
   @IsOptional()
-  profilePhoto?: string;
+  licenseImage?: string;
 
   @ApiPropertyOptional({ example: 'ACTIVE', default: 'ACTIVE' })
   @IsString()
