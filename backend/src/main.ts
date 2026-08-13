@@ -16,8 +16,8 @@ async function bootstrap() {
   const compressFn = typeof compression === 'function' ? compression : (compression as any).default;
   if (compressFn) app.use(compressFn());
   
-  const allowedOrigins = process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',') 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
     : ['http://localhost:3000', 'http://localhost:3001'];
     
   app.enableCors({
