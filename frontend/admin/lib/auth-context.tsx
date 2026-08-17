@@ -13,6 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  justLoggedInUserId: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
 }
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [justLoggedInUserId, setJustLoggedInUserId] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -58,17 +60,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (token: string, userData: User) => {
     localStorage.setItem('adminToken', token);
     setUser(userData);
+    setJustLoggedInUserId(userData.id || userData.email);
     router.push('/');
   };
 
   const logout = () => {
     localStorage.removeItem('adminToken');
     setUser(null);
+    setJustLoggedInUserId(null);
     router.push('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, justLoggedInUserId, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

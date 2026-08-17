@@ -39,6 +39,7 @@ export function BookingWidget() {
   return (
     <>
       <div 
+        data-tour="client-booking-widget"
         className="hero-booking-card w-full max-w-[450px] p-5 lg:p-6 flex flex-col gap-5"
         style={{
           background: 'rgba(15, 15, 15, 0.9)',

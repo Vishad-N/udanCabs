@@ -116,10 +116,12 @@ export default function Home() {
         </div>
       </section>
 
-      <VehicleSelectionSection />
+      <div data-tour="client-vehicles">
+        <VehicleSelectionSection />
+      </div>
 
       {/* Services Section */}
-      <section id="services" className="decorative-section services-section padding-section">
+      <section id="services" data-tour="client-services" className="decorative-section services-section padding-section">
         <div className="section-container container mx-auto px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div>

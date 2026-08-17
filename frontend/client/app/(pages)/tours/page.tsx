@@ -40,7 +40,7 @@ export default function ToursPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div data-tour="client-tours-list" className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {tours.map((tour) => (
               <div key={tour.id} className="rounded-3xl bg-card border border-border/60 overflow-hidden shadow-xl group hover:border-primary/50 transition-all flex flex-col sm:flex-row">
                 <div className="sm:w-2/5 h-48 sm:h-auto bg-secondary/50 flex items-center justify-center p-6 relative overflow-hidden">

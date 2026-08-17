@@ -15,7 +15,7 @@ export function MobileBottomNavigation() {
   };
 
   return (
-    <nav className="mobile-bottom-nav" aria-label="Primary mobile navigation">
+    <nav data-tour="client-mobile-nav" className="mobile-bottom-nav" aria-label="Primary mobile navigation">
       <Link 
         href="/"
         className={`mobile-nav-item ${pathname === "/" ? "active" : ""}`}

@@ -54,6 +54,7 @@ export default function DriversPage() {
           <p className="text-sm text-zinc-400 mt-1">Manage your fleet drivers and their statuses</p>
         </div>
         <button
+          data-tour="admin-driver-actions"
           onClick={handleAdd}
           className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-red-900/20"
         >

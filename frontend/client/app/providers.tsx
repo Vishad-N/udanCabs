@@ -4,6 +4,7 @@ import * as React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { BookingModalProvider } from '@/components/modals/BookingModalProvider';
+import { ClientAppTour } from '@/components/tour/ClientAppTour';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -28,6 +29,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <BookingModalProvider>
           {children}
+          <ClientAppTour />
         </BookingModalProvider>
       </QueryClientProvider>
     </NextThemesProvider>

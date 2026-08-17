@@ -73,6 +73,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Sidebar Navigation */}
       <aside
+        data-tour="admin-sidebar"
         className={`fixed inset-y-0 left-0 z-50 w-72 bg-zinc-900/90 border-r border-zinc-800/80 backdrop-blur-xl flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -177,7 +178,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800/50 border border-zinc-800 text-xs text-zinc-400">
+            <div data-tour="admin-status" className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800/50 border border-zinc-800 text-xs text-zinc-400">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Ujjain Dispatch Online</span>
             </div>

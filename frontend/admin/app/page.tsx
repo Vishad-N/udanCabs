@@ -60,7 +60,7 @@ export default function DashboardHome() {
           <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
             Manage your daily rides, dispatch drivers to Mahakaleshwar & Omkareshwar tourists, maintain fleet inventory, and configure dynamic pricing across Ujjain city.
           </p>
-          <div className="pt-2 flex flex-wrap gap-3">
+          <div data-tour="admin-dashboard-actions" className="pt-2 flex flex-wrap gap-3">
             <Link
               href="/bookings"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-500 transition-all shadow-lg shadow-red-600/25"
@@ -88,7 +88,7 @@ export default function DashboardHome() {
           {isLoading && <Loader2 size={16} className="animate-spin text-red-500" />}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div data-tour="admin-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {statCards.map((card) => {
             const Icon = card.icon;
             return (

@@ -60,11 +60,22 @@ function TrackBookingContent() {
   }, [initialId]);
 
   return (
-    <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 bg-background text-foreground">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="relative min-h-screen pt-24 pb-20 px-4 sm:px-6 bg-background text-foreground overflow-hidden">
+      {/* Background Image Overlay */}
+      <div 
+        className="absolute inset-0 z-0 opacity-20 pointer-events-none" 
+        style={{
+          backgroundImage: "url('/images/track-bg.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      
+      <div className="relative z-10 max-w-4xl mx-auto space-y-8">
         
         {/* Header */}
-        <div className="text-center space-y-3 print:hidden">
+        <div className="text-center space-y-3 print:hidden backdrop-blur-md bg-background/40 p-6 rounded-3xl max-w-2xl mx-auto border border-border/10">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             <ShieldCheck size={14} /> LIVE BOOKING TRACKER
           </div>
@@ -77,7 +88,7 @@ function TrackBookingContent() {
         </div>
 
         {/* Search Input Box */}
-        <div className="max-w-2xl mx-auto rounded-3xl bg-card border border-border/60 p-4 sm:p-6 shadow-xl print:hidden">
+        <div data-tour="client-track-search" className="max-w-2xl mx-auto rounded-3xl bg-card border border-border/60 p-4 sm:p-6 shadow-xl print:hidden">
           <form
             onSubmit={(e) => {
               e.preventDefault();

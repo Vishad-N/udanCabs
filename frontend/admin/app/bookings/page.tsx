@@ -70,7 +70,7 @@ export default function BookingsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-wrap items-center gap-3">
+      <div data-tour="admin-booking-filters" className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-wrap items-center gap-3">
         {/* Search */}
         <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
@@ -135,7 +135,7 @@ export default function BookingsPage() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
+      <div data-tour="admin-bookings-table" className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center text-zinc-500 gap-3">
             <Loader2 size={32} className="animate-spin text-red-600" />
