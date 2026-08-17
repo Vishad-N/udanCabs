@@ -87,7 +87,7 @@ export default function Home() {
       {/* Mobile Hero Section */}
       <section className="mobile-hero md:hidden">
         <picture className="absolute inset-0 z-0 w-full h-full" aria-hidden="true">
-          <img src="/images/hero/ujjain-mobile-hero.webp" alt="" className="w-full h-full object-cover object-center" />
+          <img src="/images/hero/ujjain-mobile-hero.webp" alt="" className="w-full h-full object-cover object-bottom" />
         </picture>
         <div className="mobile-hero__overlay" aria-hidden="true" />
 
@@ -103,8 +103,7 @@ export default function Home() {
           </h1>
 
           <p className="mobile-hero__description">
-            Trusted local rides for darshan, airport transfers and
-            comfortable journeys across Ujjain.
+            Trusted local rides, airport transfers and spiritual journeys across Ujjain.
           </p>
 
           <MobileHeroActions />
@@ -169,7 +168,7 @@ export default function Home() {
         <MapContourPattern />
         <AmbientGlow variant="saffron" className="bottom-0 left-0 translate-y-1/3 -translate-x-1/3" />
         <CoordinateLabel text={"23.1765° N · 75.7885° E\nUJJAIN, MADHYA PRADESH"} className="top-12 right-12" />
-        
+
         <div className="section-container container mx-auto px-6">
           <div className="flex items-center justify-between mb-12">
             <div>

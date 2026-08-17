@@ -546,9 +546,11 @@
   .mobile-hero {
     position: relative;
     display: flex;
-    align-items: flex-end;
-    min-height: calc(100svh - 58px);
-    padding: 110px 18px calc(108px + env(safe-area-inset-bottom));
+    align-items: flex-start;
+    margin-top: -80px;
+    height: calc(100svh - 96px);
+    min-height: auto;
+    padding: 90px 18px 24px;
     overflow: hidden;
     isolation: isolate;
   }
@@ -557,20 +559,30 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(7, 7, 8, 0.28) 0%,
-        rgba(7, 7, 8, 0.42) 35%,
-        rgba(7, 7, 8, 0.82) 76%,
-        rgba(7, 7, 8, 0.96) 100%
-      ),
-      linear-gradient(
-        90deg,
-        rgba(7, 7, 8, 0.82) 0%,
-        rgba(7, 7, 8, 0.34) 75%,
-        transparent 100%
-      );
+    background: radial-gradient(circle at 0% 0%, rgba(237, 47, 59, 0.15), transparent 50%),
+                linear-gradient(to bottom, rgba(7, 7, 8, 0.95) 0%, rgba(7, 7, 8, 0.85) 40%, rgba(7, 7, 8, 0.60) 80%, rgba(7, 7, 8, 0.70) 100%);
+  }
+
+  @media (max-height: 600px) {
+    .mobile-hero {
+      padding-top: 64px;
+    }
+    .mobile-hero__title {
+      font-size: 32px !important;
+      line-height: 1.0 !important;
+    }
+    .mobile-hero__description {
+      font-size: 13px !important;
+      margin-top: 6px !important;
+      line-height: 1.2 !important;
+    }
+    .mobile-hero__actions {
+      margin-top: 10px !important;
+      gap: 8px !important;
+    }
+    .mobile-hero__trust {
+      margin-top: 10px !important;
+    }
   }
 
   .mobile-hero__eyebrow {
@@ -589,7 +601,7 @@
     color: #FDFCFA;
     font-size: clamp(36px, 10vw, 46px);
     font-weight: 800;
-    line-height: 0.98;
+    line-height: 0.95;
     letter-spacing: -0.045em;
   }
 
@@ -608,8 +620,8 @@
 
   .mobile-hero__actions {
     display: grid;
-    gap: 12px;
-    margin-top: 24px;
+    gap: 16px;
+    margin-top: 20px;
   }
 
   .mobile-hero__actions .button-primary {
