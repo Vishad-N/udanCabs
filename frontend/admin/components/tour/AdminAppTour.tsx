@@ -179,7 +179,7 @@ export function AdminAppTour() {
 
       {active && (
         <div className="fixed inset-0 z-[100] pointer-events-none">
-          <div className="absolute inset-0 bg-black/70" />
+          {!targetRect && <div className="absolute inset-0 bg-black/70" />}
           {targetRect && (
             <div
               className="absolute rounded-2xl border-2 border-red-500 bg-transparent shadow-[0_0_0_9999px_rgba(0,0,0,0.66),0_0_32px_rgba(239,68,68,0.45)] transition-all"
