@@ -155,7 +155,7 @@ export function ClientAppTour() {
 
       {active && (
         <div className="fixed inset-0 z-[100] pointer-events-none">
-          <div className="absolute inset-0 bg-black/65" />
+          {!targetRect && <div className="absolute inset-0 bg-black/65" />}
           {targetRect && (
             <div
               className="absolute rounded-2xl border-2 border-primary bg-transparent shadow-[0_0_0_9999px_rgba(0,0,0,0.62),0_0_32px_rgba(220,38,38,0.45)] transition-all"
