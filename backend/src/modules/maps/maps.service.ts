@@ -35,23 +35,41 @@ export class MapsService {
 
     if (this.apiKey) {
       try {
-        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
-          query.input,
-        )}&components=country:in&location=23.1827,75.7682&radius=50000&key=${this.apiKey}`;
-        const response = await fetch(url);
+        const url = `https://places.googleapis.com/v1/places:autocomplete`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': this.apiKey,
+          },
+          body: JSON.stringify({
+            input: query.input,
+            includedRegionCodes: ['IN'],
+            locationBias: {
+              circle: {
+                center: { latitude: 23.1827, longitude: 75.7682 },
+                radius: 50000.0,
+              },
+            },
+          }),
+        });
         const data = await response.json();
-        if (data.status === 'OK' && data.predictions) {
+        if (data.suggestions) {
           return {
             success: true,
             source: 'google',
-            data: data.predictions.map((p: any) => ({
-              description: p.description,
-              placeId: p.place_id,
-            })),
+            data: data.suggestions
+              .filter((s: any) => s.placePrediction)
+              .map((s: any) => ({
+                description: s.placePrediction.text.text,
+                placeId: s.placePrediction.placeId,
+              })),
           };
+        } else {
+          this.logger.warn(`Google Places API (New) returned unexpected response: ${JSON.stringify(data)}`);
         }
       } catch (error) {
-        this.logger.warn(`Google Places API error: ${error.message}. Using Ujjain fallback.`);
+        this.logger.warn(`Google Places API (New) error: ${error.message}. Using Ujjain fallback.`);
       }
     }
 
@@ -155,36 +173,51 @@ export class MapsService {
   async calculateRoute(query: RouteQueryDto) {
     if (this.apiKey) {
       try {
-        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
-          query.origin,
-        )}&destination=${encodeURIComponent(query.destination)}&key=${this.apiKey}`;
-        const res = await fetch(url);
+        const url = `https://routes.googleapis.com/directions/v2:computeRoutes`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': this.apiKey,
+            'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+          },
+          body: JSON.stringify({
+            origin: { address: query.origin },
+            destination: { address: query.destination },
+          }),
+        });
         const data = await res.json();
-        if (data.status === 'OK' && data.routes && data.routes.length > 0) {
+        if (data.routes && data.routes.length > 0) {
           const route = data.routes[0];
-          const leg = route.legs[0];
-          const distKm = parseFloat((leg.distance.value / 1000).toFixed(1));
-          const durationMins = Math.ceil(leg.duration.value / 60);
+          const distKm = parseFloat((route.distanceMeters / 1000).toFixed(1));
+          const durationSeconds = parseInt(route.duration.replace('s', ''));
+          const durationMins = Math.ceil(durationSeconds / 60);
+
+          // Get precise geocoded coordinates using our existing method
+          const originGeo = await this.geocode({ address: query.origin });
+          const destGeo = await this.geocode({ address: query.destination });
 
           return {
             success: true,
             source: 'google',
             data: {
-              origin: leg.start_address,
-              destination: leg.end_address,
-              originLat: leg.start_location.lat,
-              originLng: leg.start_location.lng,
-              destinationLat: leg.end_location.lat,
-              destinationLng: leg.end_location.lng,
+              origin: originGeo.data.address || query.origin,
+              destination: destGeo.data.address || query.destination,
+              originLat: originGeo.data.lat,
+              originLng: originGeo.data.lng,
+              destinationLat: destGeo.data.lat,
+              destinationLng: destGeo.data.lng,
               distanceKm: distKm,
               durationText: `${durationMins} Minutes`,
               durationMinutes: durationMins,
-              polyline: route.overview_polyline.points,
+              polyline: route.polyline.encodedPolyline,
             },
           };
+        } else {
+          this.logger.warn(`Google Routes API returned unexpected response: ${JSON.stringify(data)}`);
         }
       } catch (error) {
-        this.logger.warn(`Google Directions API error: ${error.message}. Using fallback.`);
+        this.logger.warn(`Google Routes API error: ${error.message}. Using fallback.`);
       }
     }
 

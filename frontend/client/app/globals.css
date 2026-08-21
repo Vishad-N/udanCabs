@@ -516,12 +516,8 @@
     background: var(--brand-red-hover, #D92330);
   }
 
-  main {
-    padding-bottom: calc(90px + env(safe-area-inset-bottom));
-  }
-
-  footer {
-    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  body {
+    padding-bottom: calc(85px + env(safe-area-inset-bottom));
   }
 
   .navbar {
@@ -548,9 +544,9 @@
     display: flex;
     align-items: flex-start;
     margin-top: -80px;
-    height: calc(100svh - 96px);
-    min-height: auto;
-    padding: 90px 18px 24px;
+    height: auto;
+    min-height: unset;
+    padding: 90px 18px 0;
     overflow: hidden;
     isolation: isolate;
   }
@@ -599,9 +595,9 @@
     max-width: 340px;
     margin: 0;
     color: #FDFCFA;
-    font-size: clamp(36px, 10vw, 46px);
+    font-size: clamp(38px, 10vw, 48px);
     font-weight: 800;
-    line-height: 0.95;
+    line-height: 0.92;
     letter-spacing: -0.045em;
   }
 
@@ -680,13 +676,12 @@
   }
 
   .mobile-carousel {
-    display: grid !important;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(250px, 82vw);
+    display: flex !important;
+    flex-wrap: nowrap;
     gap: 14px;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
-    scroll-snap-type: inline mandatory;
+    scroll-snap-type: x mandatory;
     scroll-padding-inline: 18px;
     padding: 4px 18px 16px;
     margin-inline: -18px;
@@ -698,8 +693,10 @@
     display: none;
   }
 
-  .mobile-carousel > div {
+  .mobile-carousel > div, .mobile-carousel > a, .mobile-carousel > article {
+    flex: 0 0 82%;
     scroll-snap-align: start;
+    min-width: 0;
   }
 
   .mobile-carousel .vehicle-card,
@@ -735,8 +732,10 @@
   }
 
   /* Spacing system */
-  section {
-    padding-block: 52px;
+  section, .pilgrimage-section, .services-section, .destinations-section {
+    padding-block: 48px;
+    height: auto !important;
+    min-height: unset !important;
   }
 
   .section-header {

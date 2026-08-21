@@ -16,7 +16,7 @@ export function ServiceCard({ title, imageSrc, href, className, wide = false }: 
       href={href}
       className={cn(
         "service-card group relative block overflow-hidden rounded-3xl bg-card border border-border/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/20",
-        wide ? "md:col-span-2 aspect-[2/1]" : "col-span-1 aspect-square",
+        wide ? "md:col-span-2 h-[160px] md:h-auto md:aspect-[2/1]" : "col-span-1 h-[145px] md:h-auto md:aspect-square",
         className
       )}
     >

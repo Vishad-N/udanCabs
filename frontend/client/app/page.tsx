@@ -14,7 +14,7 @@ import { SectionDivider } from '@/components/decorative/SectionDivider';
 
 export default function Home() {
   return (
-    <div className="flex flex-col gap-32 pb-32">
+    <div className="flex flex-col gap-12 md:gap-32 pb-0 md:pb-32">
       {/* Desktop Hero Section */}
       <section className="hidden md:flex relative -mt-20 pt-20 px-6 min-h-[600px] h-[100dvh] items-center overflow-hidden">
         {/* Background Image */}
@@ -85,13 +85,10 @@ export default function Home() {
       </section>
 
       {/* Mobile Hero Section */}
-      <section className="mobile-hero md:hidden">
-        <picture className="absolute inset-0 z-0 w-full h-full" aria-hidden="true">
-          <img src="/images/hero/ujjain-mobile-hero.webp" alt="" className="w-full h-full object-cover object-bottom" />
-        </picture>
+      <section className="mobile-hero md:hidden flex-col">
         <div className="mobile-hero__overlay" aria-hidden="true" />
 
-        <div className="mobile-hero__content relative z-10 w-full">
+        <div className="mobile-hero__content relative z-10 w-full pb-8">
           <span className="mobile-hero__eyebrow">
             UJJAIN’S TRUSTED LOCAL CAB
           </span>
@@ -116,7 +113,7 @@ export default function Home() {
         </div>
       </section>
 
-      <div data-tour="client-vehicles">
+      <div data-tour="client-vehicles" className="-mt-12 md:mt-0">
         <VehicleSelectionSection />
       </div>
 
@@ -215,7 +212,7 @@ export default function Home() {
         <AmbientGlow variant="saffron" className="hidden md:block top-1/2 right-0 -translate-y-1/2 translate-x-1/4" />
         <CoordinateLabel text={"LOCAL EXPERTS · UJJAIN · 24/7"} className="hidden md:block top-12 left-12" />
 
-        <div className="section-container container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20">
+        <div className="section-container container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20">
           <div>
             <p className="text-primary font-semibold text-sm mb-3 tracking-widest uppercase">The Udancab Standard</p>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight mb-8">
