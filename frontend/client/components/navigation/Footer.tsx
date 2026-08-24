@@ -50,6 +50,7 @@ export function Footer() {
           <div className="hidden md:block">
             <h4 className="text-sm font-semibold text-foreground mb-4">Quick Links</h4>
             <ul className="space-y-3">
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Us</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Cab Booking</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Bike Rentals</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Spiritual Tours</Link></li>
@@ -62,6 +63,7 @@ export function Footer() {
               <span className="transition-transform group-open:rotate-45 text-lg">+</span>
             </summary>
             <ul className="space-y-3 pt-4 pb-2">
+              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Us</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Cab Booking</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Bike Rentals</Link></li>
               <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Spiritual Tours</Link></li>
@@ -72,10 +74,10 @@ export function Footer() {
           <div className="hidden md:block">
             <h4 className="text-sm font-semibold text-foreground mb-4">Support</h4>
             <ul className="space-y-3">
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
+              <li><Link href="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link></li>
+              <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
           <details className="md:hidden group border-b border-border/20 pb-2">
@@ -84,10 +86,10 @@ export function Footer() {
               <span className="transition-transform group-open:rotate-45 text-lg">+</span>
             </summary>
             <ul className="space-y-3 pt-4 pb-2">
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</Link></li>
-              <li><Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link></li>
+              <li><Link href="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link></li>
+              <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
             </ul>
           </details>
 

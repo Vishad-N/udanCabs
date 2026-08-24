@@ -1,34 +1,40 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import * as streamifier from 'streamifier';
 
 @Injectable()
 export class UploadService {
   private readonly logger = new Logger(UploadService.name);
-  private readonly uploadDir = path.join(process.cwd(), 'uploads');
 
   constructor() {
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
-      this.logger.log(`Created upload directory at ${this.uploadDir}`);
-    }
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
   }
 
   async uploadFile(file: Express.Multer.File): Promise<{ url: string; filename: string }> {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname) || '.png';
-    const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
-    const filePath = path.join(this.uploadDir, filename);
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'udancabs',
+          resource_type: 'auto',
+        },
+        (error, result: UploadApiResponse) => {
+          if (error) {
+            this.logger.error(`Cloudinary upload failed: ${error.message}`);
+            return reject(error);
+          }
+          resolve({
+            url: result.secure_url,
+            filename: result.public_id,
+          });
+        },
+      );
 
-    await fs.promises.writeFile(filePath, file.buffer);
-
-    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-    const url = `${baseUrl}/uploads/${filename}`;
-
-    return {
-      url,
-      filename,
-    };
+      streamifier.createReadStream(file.buffer).pipe(uploadStream);
+    });
   }
 
   async uploadMultipleFiles(files: Express.Multer.File[]): Promise<{ urls: string[] }> {
@@ -38,12 +44,16 @@ export class UploadService {
     };
   }
 
-  async deleteFile(filename: string): Promise<{ deleted: boolean }> {
-    const filePath = path.join(this.uploadDir, filename);
-    if (fs.existsSync(filePath)) {
-      await fs.promises.unlink(filePath);
-      return { deleted: true };
+  async deleteFile(publicId: string): Promise<{ deleted: boolean }> {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId);
+      if (result.result === 'ok') {
+        return { deleted: true };
+      }
+      return { deleted: false };
+    } catch (error) {
+      this.logger.error(`Cloudinary delete failed: ${error.message}`);
+      return { deleted: false };
     }
-    return { deleted: false };
   }
 }

@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { name: "Destinations", href: "/#destinations" },
   { name: "Spiritual", href: "/#spiritual" },
   { name: "Fleet", href: "/#fleet" },
+  { name: "About Us", href: "/about" },
 ];
 
 export function Navbar() {
