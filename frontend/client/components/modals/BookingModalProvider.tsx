@@ -16,9 +16,15 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [initialData, setInitialData] = useState<any>({});
   const [confirmedBooking, setConfirmedBooking] = useState<any>(null);
+  const [initialTab, setInitialTab] = useState("Cab");
 
   const openModal = (categoryId?: string, data?: any) => {
     setInitialData({ ...data, categoryId });
+    if (data?.initialTab) {
+      setInitialTab(data.initialTab);
+    } else {
+      setInitialTab("Cab");
+    }
     setIsOpen(true);
   };
 
@@ -33,7 +39,7 @@ export function BookingModalProvider({ children }: { children: ReactNode }) {
       <BookingModal
         isOpen={isOpen}
         onClose={closeModal}
-        initialTab="Local Ride"
+        initialTab={initialTab}
         initialData={initialData}
         onSuccess={(booking) => setConfirmedBooking(booking)}
       />

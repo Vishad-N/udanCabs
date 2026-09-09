@@ -89,4 +89,41 @@ Please contact our support at ${this.businessPhone} for further assistance.`;
     const msg = `🚕 *Udan Cabs Trip Started*\n\nYour trip for Booking ID: ${booking.bookingNumber} has started. Have a safe journey with the blessings of Mahakal!`;
     await this.sendMessage(booking.customerPhone, msg);
   }
+
+  async sendDocumentMessage(to: string, documentUrl: string, caption: string) {
+    if (!this.token || !this.phoneId) {
+      this.logger.warn(`[MOCK WHATSAPP DOCUMENT] To ${to}:\nURL: ${documentUrl}\nCaption: ${caption}`);
+      return;
+    }
+
+    try {
+      await axios.post(
+        `https://graph.facebook.com/v17.0/${this.phoneId}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          to,
+          type: 'document',
+          document: {
+            link: documentUrl,
+            caption: caption,
+            filename: 'UdanCabs-Tour-Receipt.pdf'
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      this.logger.log(`WhatsApp document sent to ${to}`);
+    } catch (error: any) {
+      this.logger.error(`Failed to send WhatsApp document to ${to}`, error.response?.data || error.message);
+    }
+  }
+
+  async notifyCustomerTourConfirmed(booking: any, receiptUrl: string) {
+    const msg = `🕉️ *Udan Cabs Spiritual Tour Confirmed!*\n\nBooking ID: ${booking.bookingNumber}\nTour: ${booking.dropoffLocation}\nReporting Time: ${booking.pickupDate} at ${booking.pickupTime}\n\nYour tour receipt is attached. Please show this to your driver at the starting point.`;
+    await this.sendDocumentMessage(booking.customerPhone, receiptUrl, msg);
+  }
 }

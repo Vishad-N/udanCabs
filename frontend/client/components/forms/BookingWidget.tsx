@@ -5,8 +5,10 @@ import { Calendar, Clock, ArrowDownUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBookingModal } from "@/components/modals/BookingModalProvider";
 import { LocationAutocomplete, LocationValue } from "@/components/inputs/LocationAutocomplete";
+import { tourApi } from "@/lib/api";
+import { useEffect } from "react";
 
-const TABS = ["Local Ride", "Airport", "Darshan Tour"];
+const TABS = ["Local Ride", "Darshan Tour"];
 
 export function BookingWidget() {
   const [activeTab, setActiveTab] = useState("Local Ride");
@@ -21,9 +23,25 @@ export function BookingWidget() {
   const [pickupDate, setPickupDate] = useState("");
   const [pickupTime, setPickupTime] = useState("");
 
+  const [tourPackages, setTourPackages] = useState<any[]>([]);
+  const [selectedTour, setSelectedTour] = useState("");
+
   const { openModal } = useBookingModal();
 
+  useEffect(() => {
+    if (activeTab === "Darshan Tour") {
+      tourApi.getPublic().then((res: any) => {
+        const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        setTourPackages(data);
+      }).catch(console.error);
+    }
+  }, [activeTab]);
+
   const handleFindRides = () => {
+    let tabId = "Cab";
+    if (activeTab === "Airport") tabId = "Airport";
+    if (activeTab === "Darshan Tour") tabId = "Tours";
+
     openModal(undefined, {
       pickupLocation,
       dropoffLocation,
@@ -33,6 +51,7 @@ export function BookingWidget() {
       dropoffLng,
       pickupDate,
       pickupTime,
+      initialTab: tabId,
     });
   };
 
@@ -71,90 +90,85 @@ export function BookingWidget() {
 
         {/* Form */}
         <div className="space-y-4">
-          <LocationAutocomplete
-            label="Pickup Location"
-            value={pickupLocation}
-            onChange={setPickupLocation}
-            onSelectLocation={(val: LocationValue) => {
-              setPickupLocation(val.address);
-              setPickupLat(val.lat);
-              setPickupLng(val.lng);
-            }}
-            placeholder="e.g. Mahakal Temple"
-            showCurrentLocation={true}
-          />
+          {activeTab === "Darshan Tour" ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-white/70 uppercase tracking-wider mb-2">Select Tour Package</label>
+                <select
+                  value={selectedTour}
+                  onChange={(e) => setSelectedTour(e.target.value)}
+                  className="w-full h-[52px] bg-[#1a1a1a] border border-white/10 rounded-xl px-4 text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors appearance-none"
+                >
+                  <option value="" disabled>Choose a spiritual tour...</option>
+                  {tourPackages.map((pkg) => (
+                    <option key={pkg.id} value={pkg.id}>
+                      {pkg.name} - ₹{pkg.basePrice || pkg.price}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center pt-8">
+                  <ArrowDownUp size={14} className="text-white/40 opacity-0" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <LocationAutocomplete
+                label="Pickup Location"
+                value={pickupLocation}
+                onChange={setPickupLocation}
+                onSelectLocation={(val: LocationValue) => {
+                  setPickupLocation(val.address);
+                  setPickupLat(val.lat);
+                  setPickupLng(val.lng);
+                }}
+                placeholder="e.g. Mahakal Temple"
+                showCurrentLocation={true}
+              />
 
-          <div className="relative flex justify-center -my-3 z-10">
+              <div className="relative flex justify-center -my-3 z-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const tempLoc = pickupLocation;
+                    const tempLat = pickupLat;
+                    const tempLng = pickupLng;
+                    setPickupLocation(dropoffLocation);
+                    setPickupLat(dropoffLat);
+                    setPickupLng(dropoffLng);
+                    setDropoffLocation(tempLoc);
+                    setDropoffLat(tempLat);
+                    setDropoffLng(tempLng);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 text-white/60 hover:text-white transition-colors shadow-sm"
+                >
+                  <ArrowDownUp size={14} />
+                </button>
+              </div>
+
+              <LocationAutocomplete
+                label="Destination"
+                value={dropoffLocation}
+                onChange={setDropoffLocation}
+                onSelectLocation={(val: LocationValue) => {
+                  setDropoffLocation(val.address);
+                  setDropoffLat(val.lat);
+                  setDropoffLng(val.lng);
+                }}
+                placeholder="e.g. Indore Airport"
+                showCurrentLocation={false}
+              />
+            </>
+          )}
+
+          <div className="pt-2">
             <button
-              type="button"
-              onClick={() => {
-                const tempLoc = pickupLocation;
-                const tempLat = pickupLat;
-                const tempLng = pickupLng;
-                setPickupLocation(dropoffLocation);
-                setPickupLat(dropoffLat);
-                setPickupLng(dropoffLng);
-                setDropoffLocation(tempLoc);
-                setDropoffLat(tempLat);
-                setDropoffLng(tempLng);
-              }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a1a] border border-white/10 text-white/60 hover:text-white transition-colors shadow-sm"
+              onClick={handleFindRides}
+              className="mt-4 w-full rounded-[10px] bg-primary py-3 text-center text-[15px] font-bold text-white transition-all hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
             >
-              <ArrowDownUp size={14} />
+              Check Available Rides
             </button>
           </div>
-
-          <LocationAutocomplete
-            label="Destination"
-            value={dropoffLocation}
-            onChange={setDropoffLocation}
-            onSelectLocation={(val: LocationValue) => {
-              setDropoffLocation(val.address);
-              setDropoffLat(val.lat);
-              setDropoffLng(val.lng);
-            }}
-            placeholder={activeTab === "Airport" ? "Devi Ahilyabai Airport (IDR)" : "e.g. Indore Airport"}
-            showCurrentLocation={false}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="block text-[11px] font-semibold text-white/60 uppercase tracking-wider ml-1">Date</label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
-                  <Calendar size={16} />
-                </div>
-                <input
-                  type="date"
-                  value={pickupDate}
-                  onChange={(e) => setPickupDate(e.target.value)}
-                  className="w-full rounded-[10px] border border-white/10 bg-white/5 px-10 py-2 text-sm font-medium text-white outline-none transition-all focus:border-primary focus:bg-white/10"
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="block text-[11px] font-semibold text-white/60 uppercase tracking-wider ml-1">Time</label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
-                  <Clock size={16} />
-                </div>
-                <input
-                  type="text"
-                  value={pickupTime}
-                  onChange={(e) => setPickupTime(e.target.value)}
-                  placeholder="10:30 AM"
-                  className="w-full rounded-[10px] border border-white/10 bg-white/5 px-10 py-2 text-sm font-medium text-white outline-none transition-all placeholder:text-white/30 focus:border-primary focus:bg-white/10"
-                />
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleFindRides}
-            className="mt-4 w-full rounded-[10px] bg-primary py-3 text-center text-[15px] font-bold text-white transition-all hover:bg-primary/90 hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
-          >
-            Check Available Rides
-          </button>
           
           <p className="text-center text-[12.5px] text-white/40 font-medium pt-2">
             No advance payment &middot; Verified local drivers

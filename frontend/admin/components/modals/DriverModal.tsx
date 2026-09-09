@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { driversApi } from '@/lib/api';
+import { driversApi, uploadApi } from '@/lib/api';
 import { X, Loader2, Save } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -15,6 +15,7 @@ const driverSchema = z.object({
   emergencyContact: z.string().optional(),
   address: z.string().optional(),
   status: z.string(),
+  profilePhoto: z.string().min(1, "Profile photo is required"),
 });
 
 type DriverFormValues = z.infer<typeof driverSchema>;
@@ -27,6 +28,8 @@ interface DriverModalProps {
 
 export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
   const queryClient = useQueryClient();
+  const [profilePhoto, setProfilePhoto] = React.useState<string>('');
+  const [isUploading, setIsUploading] = React.useState(false);
 
   const {
     register,
@@ -48,6 +51,7 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
   useEffect(() => {
     if (isOpen) {
       if (driver) {
+        setProfilePhoto(driver.profilePhoto || '');
         reset({
           name: driver.name || '',
           phone: driver.phone || '',
@@ -55,8 +59,10 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
           emergencyContact: driver.emergencyContact || '',
           address: driver.address || '',
           status: driver.status || 'ACTIVE',
+          profilePhoto: driver.profilePhoto || '',
         });
       } else {
+        setProfilePhoto('');
         reset({
           name: '',
           phone: '',
@@ -64,17 +70,35 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
           emergencyContact: '',
           address: '',
           status: 'ACTIVE',
+          profilePhoto: '',
         });
       }
     }
   }, [isOpen, driver, reset]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    try {
+      setIsUploading(true);
+      const res = await uploadApi.uploadSingle(e.target.files[0]);
+      if (res?.url) {
+        setProfilePhoto(res.url);
+      }
+    } catch (err) {
+      console.error('Failed to upload image', err);
+      alert('Failed to upload profile photo.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const mutation = useMutation({
     mutationFn: (data: DriverFormValues) => {
+      const payload = { ...data, profilePhoto };
       if (driver?.id) {
-        return driversApi.update(driver.id, data);
+        return driversApi.update(driver.id, payload);
       }
-      return driversApi.create(data);
+      return driversApi.create(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drivers'] });
@@ -175,6 +199,39 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
                 <option value="INACTIVE">Inactive</option>
                 <option value="ON_TRIP">On Trip</option>
               </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1">Profile Photo *</label>
+              <div className="flex items-center gap-4">
+                {profilePhoto ? (
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden border border-zinc-800 shrink-0">
+                    <img src={profilePhoto} alt="Profile" className="object-cover w-full h-full" />
+                    <button
+                      type="button"
+                      onClick={() => setProfilePhoto('')}
+                      className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                    >
+                      <X size={16} className="text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                    <span className="text-xs text-zinc-500">None</span>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={isUploading}
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-red-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-500/10 file:text-red-500 hover:file:bg-red-500/20"
+                  />
+                  {isUploading && <p className="text-xs text-zinc-400 mt-2 flex items-center gap-2"><Loader2 size={12} className="animate-spin" /> Uploading...</p>}
+                  {errors.profilePhoto && !profilePhoto && <p className="mt-1 text-xs text-red-500">{errors.profilePhoto.message}</p>}
+                </div>
+              </div>
             </div>
           </form>
         </div>

@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TimelineService } from '../timeline/timeline.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
+import { UploadService } from '../upload/upload.service';
+import PDFDocument from 'pdfkit';
 import {
   CreateBookingDto,
   UpdateBookingDto,
@@ -18,7 +20,8 @@ export class BookingService {
   constructor(
     private prisma: PrismaService,
     private timelineService: TimelineService,
-    private whatsappService: WhatsAppService
+    private whatsappService: WhatsAppService,
+    private uploadService: UploadService
   ) {}
 
   private parseBooking(booking: any) {
@@ -76,6 +79,27 @@ export class BookingService {
   async create(createBookingDto: CreateBookingDto) {
     const bookingNumber = await this.generateBookingNumber();
 
+    let scheduledPickupAt: Date | null = null;
+    if (createBookingDto.isScheduled) {
+      if (!createBookingDto.scheduledPickupAt) {
+        throw new BadRequestException('Scheduled time is required for scheduled bookings.');
+      }
+      scheduledPickupAt = new Date(createBookingDto.scheduledPickupAt);
+      
+      // Validate it's a valid date
+      if (isNaN(scheduledPickupAt.getTime())) {
+        throw new BadRequestException('Invalid scheduled pickup timestamp.');
+      }
+
+      // Minimum scheduling buffer: 30 minutes from now
+      const now = new Date();
+      const minBuffer = new Date(now.getTime() + 30 * 60000);
+      
+      if (scheduledPickupAt < minBuffer) {
+        throw new BadRequestException('Please select a pickup time at least 30 minutes from now.');
+      }
+    }
+
     const data: Prisma.BookingCreateInput = {
       bookingNumber,
       bookingType: createBookingDto.bookingType || 'CAB',
@@ -86,6 +110,8 @@ export class BookingService {
       dropoffLocation: createBookingDto.dropoffLocation || createBookingDto.destinationAddress,
       pickupDate: createBookingDto.pickupDate,
       pickupTime: createBookingDto.pickupTime,
+      isScheduled: createBookingDto.isScheduled || false,
+      scheduledPickupAt,
       passengers: createBookingDto.passengers,
       vehicleCategory: createBookingDto.vehicleCategory,
       flightNumber: createBookingDto.flightNumber,
@@ -312,6 +338,86 @@ export class BookingService {
 
     return this.parseBooking(finalBooking);
   }
+
+  
+  async confirmTour(id: string, dto: import('./dto/booking.dto').ConfirmTourBookingDto) {
+    const booking = await this.findOne(id);
+
+    if (booking.bookingType !== 'TOUR') {
+      throw new BadRequestException('This action is only valid for Tour bookings.');
+    }
+
+    if (booking.status !== BookingStatusEnum.PENDING) {
+      throw new BadRequestException('Booking is already confirmed or cancelled.');
+    }
+
+    const updated = await this.prisma.booking.update({
+      where: { id: booking.id },
+      data: {
+        status: BookingStatusEnum.CONFIRMED,
+        pickupDate: dto.reportingDate || booking.pickupDate,
+        pickupTime: dto.reportingTime || booking.pickupTime,
+        pickupLocation: dto.reportingPlace || booking.pickupLocation,
+      },
+      include: this.commonIncludes,
+    });
+
+    await this.timelineService.addEvent(
+      booking.id,
+      'Tour Confirmed',
+      'Admin confirmed the tour booking and generated receipt.'
+    );
+
+    // Generate PDF Receipt in memory
+    const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const buffers: Buffer[] = [];
+      doc.on('data', (buffer) => buffers.push(buffer));
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
+      doc.on('error', reject);
+
+      // PDF Content
+      doc.fontSize(24).font('Helvetica-Bold').text('Udan Cabs', { align: 'center' });
+      doc.fontSize(14).font('Helvetica').text('Spiritual Tour Receipt', { align: 'center' });
+      doc.moveDown(2);
+
+      doc.fontSize(12).font('Helvetica-Bold').text('Booking Details:');
+      doc.font('Helvetica').text(`Booking Number: ${updated.bookingNumber}`);
+      doc.text(`Date Issued: ${new Date().toLocaleDateString()}`);
+      doc.moveDown();
+
+      doc.font('Helvetica-Bold').text('Customer Information:');
+      doc.font('Helvetica').text(`Name: ${updated.customerName}`);
+      doc.text(`Phone: ${updated.customerPhone}`);
+      if (updated.passengerNames && updated.passengerNames.length > 0) {
+        doc.text(`Passengers: ${updated.passengerNames.join(', ')}`);
+      }
+      doc.moveDown();
+
+      doc.font('Helvetica-Bold').text('Tour Information:');
+      doc.font('Helvetica').text(`Package: ${updated.dropoffLocation || 'Ujjain Tour'}`);
+      doc.text(`Vehicle: ${updated.vehicleCategory}`);
+      doc.text(`Reporting Date: ${updated.pickupDate}`);
+      doc.text(`Reporting Time: ${updated.pickupTime}`);
+      doc.text(`Reporting Place: ${updated.pickupLocation}`);
+      doc.moveDown(2);
+
+      doc.fontSize(10).font('Helvetica-Oblique').text('Please present this receipt to your driver at the reporting location.', { align: 'center' });
+      doc.text('Thank you for choosing Udan Cabs. Have a blessed journey!', { align: 'center' });
+
+      doc.end();
+    });
+
+    // Upload PDF to Cloudinary
+    const filename = `receipt_${updated.bookingNumber}_${Date.now()}.pdf`;
+    const uploadResult = await this.uploadService.uploadPdfBuffer(pdfBuffer, filename);
+
+    // Send WhatsApp notification
+    await this.whatsappService.notifyCustomerTourConfirmed(updated, uploadResult.url);
+
+    return this.parseBooking(updated);
+  }
+
 
   async update(id: string, updateBookingDto: UpdateBookingDto) {
     const booking = await this.findOne(id);

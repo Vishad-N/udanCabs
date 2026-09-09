@@ -71,6 +71,16 @@ export class CreateTourDto {
   @Transform(({ value }) => parseFloat(value))
   price: number;
 
+  @ApiPropertyOptional({
+    example: [
+      { name: 'Dzire', price: 2000 },
+      { name: 'Ertiga', price: 3000 },
+    ],
+  })
+  @IsArray()
+  @IsOptional()
+  carOptions?: any[];
+
   @ApiPropertyOptional({ example: 4500.0 })
   @IsNumber()
   @IsOptional()

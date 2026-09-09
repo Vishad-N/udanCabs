@@ -105,6 +105,7 @@ model Booking {
   pickupDate      String?
   pickupTime      String?
   passengers      Int?
+  passengerNames  String[]       @default([])
   vehicleCategory String?        // e.g. Sedan, SUV, Innova, Traveller
   flightNumber    String?
   tourPackageId   String?
@@ -139,6 +140,8 @@ model Booking {
   routePolyline        String?  // Encoded polyline or JSON coordinates
   driverId        String?
   driver          Driver?        @relation(fields: [driverId], references: [id])
+  isScheduled     Boolean        @default(false)
+  scheduledPickupAt DateTime?
   isArchived      Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -162,6 +165,7 @@ model TourPackage {
   includedServices String[]  @default([])
   excludedServices String[]  @default([])
   price            Float     // Default/base price
+  carOptions       Json?     @default("[]") // [{ name: "Dzire", price: 2000 }]
   sedanPrice       Float?    // Sedan Price
   suvPrice         Float?    // SUV Price
   innovaPrice      Float?    // Innova Price

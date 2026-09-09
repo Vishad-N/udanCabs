@@ -41,12 +41,25 @@ export function BookingConfirmationModal({ isOpen, onClose, booking }: BookingCo
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-25"></span>
             <CheckCircle2 size={48} className="relative z-10" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Booking Confirmed!
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your ride request has been saved and sent to our dispatch team.
-          </p>
+          {booking.bookingType === 'TOUR' ? (
+            <>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Request Submitted!
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                Request has been generated. Please wait till we confirm your package... waiting time may increase according to availability and confirm receipt will be sent only after admin approves.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Booking Confirmed!
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your ride request has been saved and sent to our dispatch team.
+              </p>
+            </>
+          )}
 
           {/* Booking Number Box */}
           <div className="mt-6 flex items-center gap-3 rounded-2xl bg-secondary/60 px-6 py-4 border border-border/50">

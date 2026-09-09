@@ -5,6 +5,7 @@ import { DestinationCard } from "@/components/cards/DestinationCard";
 import { Star } from "lucide-react";
 import { VehicleSelectionSection } from "@/components/sections/VehicleSelectionSection";
 import { MobileHeroActions } from "@/components/sections/MobileHeroActions";
+import { DesktopHeroActions } from "@/components/sections/DesktopHeroActions";
 import { SectionWatermark } from '@/components/decorative/SectionWatermark';
 import { MapContourPattern } from '@/components/decorative/MapContourPattern';
 import { TempleArch } from '@/components/decorative/TempleArch';
@@ -52,15 +53,7 @@ export default function Home() {
               Trusted local cabs for darshan, airport transfers and comfortable journeys across Ujjain.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2 w-full sm:w-auto">
-              <button className="h-12 px-6 lg:px-8 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20 w-full sm:w-auto">
-                Book Your Ride
-              </button>
-              <button className="text-sm font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-2 group p-2">
-                Explore Darshan Tours
-                <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
-              </button>
-            </div>
+            <DesktopHeroActions />
 
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 w-full max-w-lg text-[13px] text-muted-foreground font-medium">
               <div className="flex items-center gap-1.5">
@@ -179,7 +172,7 @@ export default function Home() {
           <div className="mobile-carousel grid grid-cols-1 md:grid-cols-3 gap-6">
             <DestinationCard
               title="Mahakaleshwar Temple"
-              imageSrc="https://images.unsplash.com/photo-1707056461996-03e87fbdb04b?auto=format&fit=crop&q=80"
+              imageSrc="/images/mahakal-final.jpg"
               time="15 min"
               distance="5 km"
               price="₹150"
@@ -187,7 +180,7 @@ export default function Home() {
             />
             <DestinationCard
               title="Ram Ghat (Shipra)"
-              imageSrc="https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&q=80"
+              imageSrc="/images/ramghat-final.jpg"
               time="20 min"
               distance="7 km"
               price="₹200"
@@ -195,7 +188,7 @@ export default function Home() {
             />
             <DestinationCard
               title="Kal Bhairav Temple"
-              imageSrc="https://images.unsplash.com/photo-1695627255883-8a30ccbd9cc5?auto=format&fit=crop&q=80"
+              imageSrc="/images/kalbhairav-final.jpg"
               time="25 min"
               distance="10 km"
               price="₹300"
@@ -236,7 +229,7 @@ export default function Home() {
 
           <div className="space-y-8">
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-3xl border border-border/50">
-              <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80" alt="Chauffeur" className="object-cover w-full h-full grayscale" />
+              <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80" alt="Chauffeur" className="object-cover w-full h-full grayscale" />
             </div>
 
             <div>
@@ -247,8 +240,7 @@ export default function Home() {
             </div>
 
             <div className="story-card relative aspect-[21/9] w-full overflow-hidden rounded-3xl border border-border/50 bg-secondary/50 flex items-center justify-center">
-              {/* Icon placeholder for Pristine Fleet */}
-              <svg className="w-12 h-12 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+              <img src="/images/fleet-final.jpg" alt="Pristine Fleet" className="object-cover w-full h-full" />
             </div>
 
             <div>

@@ -3,9 +3,10 @@ import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
 import { TimelineModule } from '../timeline/timeline.module';
 import { WhatsAppModule } from '../whatsapp/whatsapp.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
-  imports: [TimelineModule, WhatsAppModule],
+  imports: [TimelineModule, WhatsAppModule, UploadModule],
   controllers: [BookingController],
   providers: [BookingService],
   exports: [BookingService],

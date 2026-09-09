@@ -25,9 +25,10 @@ import {
   Briefcase,
   Sparkles,
 } from 'lucide-react';
-import { bookingApi, mapsApi, pricingApi } from '@/lib/api';
+import { bookingApi, mapsApi, pricingApi, tourApi } from '@/lib/api';
 import { InteractiveMap } from '@/components/ui/InteractiveMap';
 import { LocationAutocomplete, LocationValue } from '@/components/inputs/LocationAutocomplete';
+import { ScheduleSelector } from '@/components/inputs/ScheduleSelector';
 
 const bookingSchema = z.object({
   customerName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -36,6 +37,7 @@ const bookingSchema = z.object({
   pickupDate: z.string().min(1, 'Travel date is required'),
   pickupTime: z.string().min(1, 'Travel time is required'),
   passengers: z.number().min(1).max(20).optional(),
+  passengerNames: z.array(z.string()).optional(),
   flightNumber: z.string().optional(),
   rentalDuration: z.string().optional(),
   licenseNumber: z.string().optional(),
@@ -89,6 +91,17 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
   const [fareEstimates, setFareEstimates] = useState<any[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
 
+  // Tour State
+  const [tourPackages, setTourPackages] = useState<any[]>([]);
+  const [toursLoading, setToursLoading] = useState(false);
+  const [selectedTourPackage, setSelectedTourPackage] = useState<any>(null);
+  const [selectedTourCar, setSelectedTourCar] = useState<any>(null);
+
+  // Schedule State
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
+  const [scheduledTimeStr, setScheduledTimeStr] = useState<string>('');
+
   const {
     register,
     handleSubmit,
@@ -105,6 +118,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
       pickupDate: initialData?.pickupDate || new Date().toISOString().split('T')[0],
       pickupTime: initialData?.pickupTime || '10:00 AM',
       passengers: 4,
+      passengerNames: [],
       flightNumber: '',
       rentalDuration: '1 Day',
       licenseNumber: '',
@@ -128,6 +142,30 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
       setStep(1);
     }
   }, [isOpen, initialTab, initialData]);
+
+  // Fetch tour packages
+  useEffect(() => {
+    if (isOpen && activeTab === 'Tours') {
+      const fetchTours = async () => {
+        setToursLoading(true);
+        try {
+          const res = await tourApi.getPublic();
+          if (Array.isArray(res.data)) {
+            setTourPackages(res.data);
+          } else if (res.data && Array.isArray(res.data.data)) {
+            setTourPackages(res.data.data);
+          } else {
+            setTourPackages([]);
+          }
+        } catch (err) {
+          console.error('Failed to fetch tours:', err);
+        } finally {
+          setToursLoading(false);
+        }
+      };
+      fetchTours();
+    }
+  }, [isOpen, activeTab]);
 
   // Automatically calculate route when pickup and dropoff change
   useEffect(() => {
@@ -203,6 +241,16 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
   };
 
   const handleNextToVehicles = () => {
+    if (activeTab === 'Tours') {
+      if (!selectedTourPackage) {
+        setErrorMsg('Please select a tour package to continue.');
+        return;
+      }
+      setErrorMsg(null);
+      setStep(3); // skip step 2 for tours
+      return;
+    }
+    
     if (!pickupAddr || (!dropoffAddr && activeTab !== 'Rental')) {
       setErrorMsg('Please select both pickup and destination locations.');
       return;
@@ -233,18 +281,34 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
     setLoading(true);
     setErrorMsg(null);
     try {
-      const fare = activeTab === 'Rental' ? 800 : selectedVehicle?.estimatedFare || 1200;
+      const fare = activeTab === 'Rental' ? 800 : (activeTab === 'Tours' ? (selectedTourCar ? selectedTourCar.price : (selectedTourPackage?.basePrice || selectedTourPackage?.price)) : selectedVehicle?.estimatedFare || 1200);
+      let finalScheduledPickupAt: string | undefined = undefined;
+      if (isScheduled && scheduledDate && scheduledTimeStr) {
+        const [timePart, ampm] = scheduledTimeStr.split(' ');
+        const [hourStr, minStr] = timePart.split(':');
+        let hours = parseInt(hourStr, 10);
+        if (ampm === 'PM' && hours < 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        
+        const finalDate = new Date(scheduledDate);
+        finalDate.setHours(hours, parseInt(minStr, 10), 0, 0);
+        finalScheduledPickupAt = finalDate.toISOString();
+      }
+
       const payload = {
         ...data,
+        customerName: activeTab === 'Tours' ? (data.passengerNames?.[0] || 'Tour Booker') : data.customerName,
+        passengerNames: activeTab === 'Tours' ? data.passengerNames : [],
         bookingType: getBookingTypeEnum(activeTab),
-        pickupLocation: pickupAddr,
-        dropoffLocation: dropoffAddr || 'Rental Return Store',
-        vehicleCategory: selectedVehicle?.categoryName || 'Sedan',
+        pickupLocation: activeTab === 'Tours' ? 'Tour Starting Point' : pickupAddr,
+        dropoffLocation: activeTab === 'Tours' ? selectedTourPackage?.name : (dropoffAddr || 'Rental Return Store'),
+        vehicleCategory: activeTab === 'Tours' ? (selectedTourCar ? selectedTourCar.name : 'Standard') : (selectedVehicle?.categoryName || 'Sedan'),
+        tourPackageId: activeTab === 'Tours' ? selectedTourPackage?.id : undefined,
         totalFare: fare,
-        pickupAddress: pickupAddr,
+        pickupAddress: activeTab === 'Tours' ? 'Tour Starting Point' : pickupAddr,
         pickupLatitude: pickupLat,
         pickupLongitude: pickupLng,
-        destinationAddress: dropoffAddr,
+        destinationAddress: activeTab === 'Tours' ? selectedTourPackage?.name : dropoffAddr,
         destinationLatitude: dropoffLat,
         destinationLongitude: dropoffLng,
         distance: routeInfo?.distanceKm,
@@ -252,6 +316,8 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
         estimatedFare: fare,
         pricingSnapshot: selectedVehicle?.pricingSnapshot,
         routePolyline: routeInfo?.polyline,
+        isScheduled,
+        scheduledPickupAt: finalScheduledPickupAt,
       };
 
       const result = await bookingApi.create(payload);
@@ -321,7 +387,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
         )}
 
         {/* Step Content Area */}
-        <div className="flex-1 overflow-y-auto py-2 pr-1 space-y-6">
+        <div className="flex-1 overflow-y-auto pt-2 pb-8 pr-1 space-y-6">
           {/* STEP 1: ROUTE & MAP */}
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in-50 duration-200">
@@ -349,20 +415,31 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <LocationAutocomplete
-                  label={activeTab === 'Airport' ? 'Pickup Address in Ujjain / Indore' : 'Pickup Location *'}
-                  placeholder="e.g. Mahakal Temple, Ujjain"
-                  value={pickupAddr}
-                  onChange={setPickupAddr}
-                  onSelectLocation={(val: LocationValue) => {
-                    setPickupAddr(val.address);
-                    setPickupLat(val.lat);
-                    setPickupLng(val.lng);
-                  }}
-                  showCurrentLocation={true}
-                />
+                {activeTab === 'Tours' ? null : (
+                  <LocationAutocomplete
+                    label={activeTab === 'Airport' ? 'Pickup Address in Ujjain / Indore' : 'Pickup Location *'}
+                    placeholder="e.g. Mahakal Temple, Ujjain"
+                    value={pickupAddr}
+                    onChange={setPickupAddr}
+                    onSelectLocation={(val: LocationValue) => {
+                      setPickupAddr(val.address);
+                      setPickupLat(val.lat);
+                      setPickupLng(val.lng);
+                    }}
+                    showCurrentLocation={true}
+                  />
+                )}
 
-                {activeTab !== 'Rental' ? (
+                {activeTab === 'Rental' ? (
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Rental Store</label>
+                    <input
+                      disabled
+                      value="Udan Cabs Central Bike Station, Nanakheda, Ujjain"
+                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2.5 px-4 text-zinc-400 text-xs cursor-not-allowed"
+                    />
+                  </div>
+                ) : activeTab === 'Tours' ? null : (
                   <LocationAutocomplete
                     label={activeTab === 'Airport' ? 'Airport Name / Terminal' : 'Dropoff Destination *'}
                     placeholder="e.g. Indore Airport or Omkareshwar"
@@ -375,37 +452,111 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                     }}
                     showCurrentLocation={false}
                   />
-                ) : (
-                  <div>
-                    <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1">Rental Store</label>
-                    <input
-                      disabled
-                      value="Udan Cabs Central Bike Station, Nanakheda, Ujjain"
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-2.5 px-4 text-zinc-400 text-xs cursor-not-allowed"
-                    />
-                  </div>
                 )}
               </div>
 
-              {/* Interactive Route Map Preview */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-semibold text-zinc-400">
-                  <span>Route Map Preview</span>
-                  {routeLoading && (
-                    <span className="flex items-center gap-1.5 text-amber-400 animate-pulse">
-                      <Loader2 size={12} className="animate-spin" /> Calculating route geometry...
-                    </span>
+              {activeTab === 'Tours' ? (
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground bg-secondary/50 p-4 rounded-xl border border-border/40">
+                    <MapPin className="text-primary shrink-0" size={18} />
+                    <span>No pickup or drop location required. Please arrive at the designated starting point for your tour.</span>
+                  </div>
+                  
+                  {toursLoading ? (
+                    <div className="py-12 flex flex-col items-center text-muted-foreground">
+                      <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
+                      <p>Loading tour packages...</p>
+                    </div>
+                  ) : tourPackages.length === 0 ? (
+                    <div className="py-12 flex flex-col items-center justify-center text-center">
+                      <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+                        <AlertCircle className="w-8 h-8 text-amber-500" />
+                      </div>
+                      <h3 className="text-lg font-bold text-foreground mb-2">No Packages Available</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">Stay tuned packages will be available soon in your area!</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {tourPackages.map((tour) => {
+                        const carOptions = tour.carOptions ? (typeof tour.carOptions === 'string' ? JSON.parse(tour.carOptions) : tour.carOptions) : [];
+                        const isSelected = selectedTourPackage?.id === tour.id;
+                        const displayPrice = isSelected && selectedTourCar ? selectedTourCar.price : (tour.basePrice || tour.price);
+                        
+                        return (
+                          <div 
+                            key={tour.id} 
+                            className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all flex flex-col relative ${isSelected ? 'bg-primary/5 border-primary ring-1 ring-primary shadow-lg scale-[1.02] z-10' : 'bg-card border-border/60 hover:border-border hover:bg-secondary/30'}`}
+                            onClick={() => {
+                              setSelectedTourPackage(tour);
+                              if (carOptions.length > 0) setSelectedTourCar(carOptions[0]);
+                              else setSelectedTourCar(null);
+                            }}
+                          >
+                            {isSelected && (
+                              <div className="absolute top-3 right-3 text-primary">
+                                <CheckCircle2 className="w-5 h-5 fill-primary text-primary-foreground" />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <h4 className="font-black text-base text-foreground pr-8 mb-1">{tour.name}</h4>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{tour.description}</p>
+                              
+                              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-secondary w-fit px-2.5 py-1 rounded-lg text-muted-foreground mb-4">
+                                <Clock size={12} className="text-primary" />
+                                <span>{tour.duration}</span>
+                              </div>
+                              
+                              {isSelected && carOptions.length > 0 && (
+                                <div className="mt-3 mb-2" onClick={(e) => e.stopPropagation()}>
+                                  <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Select Vehicle Variant</label>
+                                  <select 
+                                    value={selectedTourCar?.name || ''} 
+                                    onChange={(e) => {
+                                      const opt = carOptions.find((o: any) => o.name === e.target.value);
+                                      if (opt) setSelectedTourCar(opt);
+                                    }}
+                                    className="w-full bg-input/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                                  >
+                                    {carOptions.map((opt: any, idx: number) => (
+                                      <option key={idx} value={opt.name}>{opt.name} - ₹{opt.price}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="mt-3 pt-3 border-t border-border/40 flex items-center justify-between">
+                              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                                {carOptions.length > 0 && !isSelected ? "Starting From" : "Package Fare"}
+                              </span>
+                              <span className="text-lg font-black text-amber-500">₹{displayPrice}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-                <InteractiveMap
-                  origin={pickupAddr}
-                  destination={dropoffAddr}
-                  distanceKm={routeInfo?.distanceKm}
-                  durationText={routeInfo?.durationText}
-                  polyline={routeInfo?.polyline}
-                  className="h-56"
-                />
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-zinc-400">
+                    <span>Route Map Preview</span>
+                    {routeLoading && (
+                      <span className="flex items-center gap-1.5 text-amber-400 animate-pulse">
+                        <Loader2 size={12} className="animate-spin" /> Calculating route geometry...
+                      </span>
+                    )}
+                  </div>
+                  <InteractiveMap
+                    origin={pickupAddr}
+                    destination={dropoffAddr}
+                    distanceKm={routeInfo?.distanceKm}
+                    durationText={routeInfo?.durationText}
+                    polyline={routeInfo?.polyline}
+                    className="h-56"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -433,7 +584,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                   <p className="text-xs text-muted-foreground">Applying distance formulas, minimum fares & night charges</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2 -mx-2 pb-6">
                   {fareEstimates.map((veh) => {
                     const isSelected = selectedVehicle?.categoryId === veh.categoryId;
                     return (
@@ -485,16 +636,57 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
           {/* STEP 3: PASSENGER DETAILS */}
           {step === 3 && (
             <div className="space-y-6 animate-in fade-in-50 duration-200">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Full Name *</label>
-                  <input
-                    {...register('customerName')}
-                    placeholder="e.g. Rahul Sharma"
-                    className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                  />
-                  {errors.customerName && <p className="mt-1 text-xs text-destructive">{errors.customerName.message}</p>}
+              {activeTab === 'Tours' ? (
+                <div className="bg-secondary/20 p-4 rounded-2xl border border-border/40 space-y-4">
+                  <div className="flex items-center gap-2 mb-2 text-primary font-bold">
+                    <Calendar size={18} />
+                    <span>Select Tour Date & Time</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Date of Tour</label>
+                      <input
+                        type="date"
+                        {...register('pickupDate')}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Reporting Time</label>
+                      <input
+                        type="time"
+                        {...register('pickupTime')}
+                        className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                      />
+                    </div>
+                  </div>
                 </div>
+              ) : (
+                <div className="bg-secondary/20 p-4 rounded-2xl border border-border/40">
+                  <ScheduleSelector
+                    isScheduled={isScheduled}
+                    onScheduleChange={setIsScheduled}
+                    selectedDate={scheduledDate}
+                    onDateChange={setScheduledDate}
+                    selectedTimeStr={scheduledTimeStr}
+                    onTimeChange={setScheduledTimeStr}
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {activeTab !== 'Tours' && (
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Full Name *</label>
+                    <input
+                      {...register('customerName')}
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                    />
+                    {errors.customerName && <p className="mt-1 text-xs text-destructive">{errors.customerName.message}</p>}
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">Mobile Number *</label>
@@ -524,33 +716,15 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                     {...register('passengers', { valueAsNumber: true })}
                     className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 12, 17].map((num) => (
+                    {Array.from(
+                      { length: activeTab === 'Tours' ? (selectedTourCar?.maxPassengers || 4) : 17 }, 
+                      (_, i) => activeTab === 'Tours' ? i + 1 : [1, 2, 3, 4, 5, 6, 7, 8, 12, 17][i]
+                    ).filter(Boolean).map((num) => (
                       <option key={num} value={num}>
                         {num} {num === 1 ? 'Person' : 'People'}
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Travel Date *</label>
-                  <input
-                    type="date"
-                    {...register('pickupDate')}
-                    className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                  />
-                  {errors.pickupDate && <p className="mt-1 text-xs text-destructive">{errors.pickupDate.message}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1">Pickup Time *</label>
-                  <input
-                    type="text"
-                    {...register('pickupTime')}
-                    placeholder="10:30 AM"
-                    className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                  />
-                  {errors.pickupTime && <p className="mt-1 text-xs text-destructive">{errors.pickupTime.message}</p>}
                 </div>
 
                 {activeTab === 'Airport' && (
@@ -564,6 +738,28 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                   </div>
                 )}
               </div>
+
+              {activeTab === 'Tours' && (watchPassengers || 0) > 0 && (
+                <div className="space-y-3 pt-2 border-t border-border/40">
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Users size={16} className="text-primary" /> Passenger Names
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Array.from({ length: watchPassengers || 0 }).map((_, idx) => (
+                      <div key={idx}>
+                        <input
+                          {...register(`passengerNames.${idx}` as any, { required: "Name is required" })}
+                          placeholder={`Passenger ${idx + 1} Name`}
+                          className="w-full rounded-xl border border-border bg-input/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                        />
+                        {errors.passengerNames?.[idx] && (
+                          <p className="mt-1 text-[10px] text-destructive">{(errors.passengerNames[idx] as any)?.message || "Required"}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Special Notes / Instructions</label>
@@ -584,37 +780,75 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                 <div className="flex items-center justify-between pb-4 border-b border-border/60">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold">
-                      <Car size={20} />
+                      {activeTab === 'Tours' ? <MapPin size={20} /> : <Car size={20} />}
                     </div>
                     <div>
-                      <h4 className="font-black text-base text-foreground">{selectedVehicle?.categoryName || 'City Cab'}</h4>
-                      <span className="text-xs text-muted-foreground">{activeTab} Service</span>
+                      <h4 className="font-black text-base text-foreground">
+                        {activeTab === 'Tours' ? selectedTourPackage?.name : (selectedVehicle?.categoryName || 'City Cab')}
+                      </h4>
+                      <span className="text-xs text-muted-foreground">
+                        {isScheduled ? 'Scheduled Ride' : 'Immediate Booking (Book Now)'}
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-muted-foreground block">Total Estimated Fare</span>
                     <span className="text-2xl font-mono font-black text-amber-500">
-                      ₹{activeTab === 'Rental' ? 800 : selectedVehicle?.estimatedFare || 1200}
+                      ₹{activeTab === 'Rental' ? 800 : (activeTab === 'Tours' ? (selectedTourCar ? selectedTourCar.price : (selectedTourPackage?.basePrice || selectedTourPackage?.price)) : selectedVehicle?.estimatedFare || 1200)}
                     </span>
                   </div>
                 </div>
 
+                {isScheduled && scheduledDate && scheduledTimeStr && (
+                  <div className="flex items-center justify-between py-2 border-b border-border/40">
+                    <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Scheduled For</div>
+                    <div className="text-sm font-bold text-foreground">
+                      {scheduledDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} at {scheduledTimeStr}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-muted-foreground block">Pickup Location:</span>
-                    <span className="font-semibold text-foreground">{pickupAddr}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Dropoff Destination:</span>
-                    <span className="font-semibold text-foreground">{dropoffAddr || 'N/A'}</span>
-                  </div>
+                  {activeTab === 'Tours' ? (
+                    <>
+                      <div>
+                        <span className="text-muted-foreground block">Tour Package:</span>
+                        <span className="font-semibold text-foreground">{selectedTourPackage?.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Vehicle Variant:</span>
+                        <span className="font-semibold text-foreground">{selectedTourCar ? selectedTourCar.name : 'Standard'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Tour Duration:</span>
+                        <span className="font-semibold text-foreground">{selectedTourPackage?.duration}</span>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="text-muted-foreground block">Passengers:</span>
+                        <span className="font-semibold text-foreground">
+                          {watch('passengerNames')?.filter(Boolean).join(', ')}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <span className="text-muted-foreground block">Pickup Location:</span>
+                        <span className="font-semibold text-foreground">{pickupAddr}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Dropoff Destination:</span>
+                        <span className="font-semibold text-foreground">{dropoffAddr || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block">Distance & Duration:</span>
+                        <span className="font-semibold text-foreground">{routeInfo?.distanceKm || 15} KM (~{routeInfo?.durationText || '30 Min'})</span>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <span className="text-muted-foreground block">Travel Date & Time:</span>
                     <span className="font-semibold text-foreground">{watch('pickupDate')} at {watch('pickupTime')}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block">Distance & Duration:</span>
-                    <span className="font-semibold text-foreground">{routeInfo?.distanceKm || 15} KM (~{routeInfo?.durationText || '30 Min'})</span>
                   </div>
                 </div>
 
@@ -635,7 +869,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
           {step > 1 ? (
             <button
               type="button"
-              onClick={() => setStep((prev) => (prev - 1) as any)}
+              onClick={() => setStep((prev) => (activeTab === 'Tours' && prev === 3 ? 1 : prev - 1) as any)}
               disabled={loading}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-secondary/50 text-xs font-bold text-foreground hover:bg-secondary transition-all"
             >

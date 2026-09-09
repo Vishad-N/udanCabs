@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { vehiclesApi, driversApi } from '@/lib/api';
+import { vehiclesApi, driversApi, uploadApi } from '@/lib/api';
 import { X, Loader2, Save } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
@@ -21,6 +21,7 @@ const vehicleSchema = z.object({
   luggageCapacity: z.number().min(0).max(20),
   status: z.string(),
   driverId: z.string().optional(),
+  images: z.array(z.string()).optional(),
 });
 
 type VehicleFormValues = z.infer<typeof vehicleSchema>;
@@ -34,6 +35,8 @@ interface VehicleModalProps {
 export function VehicleModal({ isOpen, onClose, vehicle }: VehicleModalProps) {
   const queryClient = useQueryClient();
   const [categories, setCategories] = useState<any[]>([]);
+  const [images, setImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: driversData } = useQuery({
     queryKey: ['available-drivers'],
@@ -75,6 +78,7 @@ export function VehicleModal({ isOpen, onClose, vehicle }: VehicleModalProps) {
   useEffect(() => {
     if (isOpen) {
       if (vehicle) {
+        setImages(vehicle.images || []);
         reset({
           plateNumber: vehicle.plateNumber || '',
           make: vehicle.make || '',
@@ -87,6 +91,7 @@ export function VehicleModal({ isOpen, onClose, vehicle }: VehicleModalProps) {
           driverId: vehicle.driverId || '',
         });
       } else {
+        setImages([]);
         reset({
           plateNumber: '',
           make: '',
@@ -102,10 +107,26 @@ export function VehicleModal({ isOpen, onClose, vehicle }: VehicleModalProps) {
     }
   }, [isOpen, vehicle, reset]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    try {
+      setIsUploading(true);
+      const res = await uploadApi.uploadMultiple(e.target.files);
+      if (res?.urls) {
+        setImages((prev) => [...prev, ...res.urls]);
+      }
+    } catch (err) {
+      console.error('Failed to upload images', err);
+      alert('Failed to upload images.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const mutation = useMutation({
     mutationFn: (data: VehicleFormValues) => {
       // API expects driverId to be null if empty
-      const payload = { ...data, driverId: data.driverId || null };
+      const payload = { ...data, driverId: data.driverId || null, images };
       if (vehicle?.id) {
         return vehiclesApi.update(vehicle.id, payload);
       }
@@ -241,6 +262,35 @@ export function VehicleModal({ isOpen, onClose, vehicle }: VehicleModalProps) {
                   <option value="INACTIVE">Inactive</option>
                 </select>
               </div>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1">Vehicle Images</label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={isUploading}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-red-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-500/10 file:text-red-500 hover:file:bg-red-500/20"
+              />
+              {isUploading && <p className="text-xs text-zinc-400 mt-2 flex items-center gap-2"><Loader2 size={12} className="animate-spin" /> Uploading...</p>}
+              {images.length > 0 && (
+                <div className="flex gap-2 mt-4 flex-wrap">
+                  {images.map((img, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-zinc-800">
+                      <img src={img} alt="Vehicle" className="object-cover w-full h-full" />
+                      <button
+                        type="button"
+                        onClick={() => setImages(images.filter((_, index) => index !== i))}
+                        className="absolute top-1 right-1 bg-black/50 rounded-full p-1 hover:bg-red-500 transition-colors"
+                      >
+                        <X size={12} className="text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </form>
         </div>

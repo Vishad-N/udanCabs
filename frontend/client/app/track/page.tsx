@@ -225,30 +225,69 @@ function TrackBookingContent() {
                     </div>
 
                     {/* Driver & Vehicle Placeholder */}
-                    <div className="p-3 rounded-2xl bg-primary/5 border border-primary/20 space-y-1">
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-3">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-primary block">
                         Assigned Driver & Fleet
                       </span>
                       {booking.assignedDriver ? (
-                        <>
-                          <p className="text-xs font-semibold text-foreground">
-                            {booking.assignedDriver.name} ({booking.assignedDriver.phone})
-                          </p>
-                          <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                            {booking.assignedVehicle 
-                              ? `${booking.assignedVehicle.make} ${booking.assignedVehicle.model} • ${booking.assignedVehicle.plateNumber.toUpperCase()}` 
-                              : 'Vehicle dispatched'}
-                          </p>
-                        </>
+                        <div className="flex items-start gap-3">
+                          {booking.assignedDriver.profilePhoto ? (
+                            <img 
+                              src={booking.assignedDriver.profilePhoto} 
+                              alt="Driver" 
+                              className="w-12 h-12 rounded-full object-cover border-2 border-primary/20 shrink-0" 
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <User size={20} className="text-primary" />
+                            </div>
+                          )}
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-semibold text-foreground">
+                              {booking.assignedDriver.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              <Phone size={12} /> {booking.assignedDriver.phone}
+                            </p>
+                            {booking.assignedVehicle && (
+                              <div className="mt-2 flex items-center gap-2 bg-background/50 rounded-lg p-2 border border-border/40">
+                                {booking.assignedVehicle.images && booking.assignedVehicle.images.length > 0 ? (
+                                  <img 
+                                    src={booking.assignedVehicle.images[0]} 
+                                    alt="Vehicle" 
+                                    className="w-10 h-10 rounded-md object-cover border border-border shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-md bg-secondary/50 flex items-center justify-center shrink-0">
+                                    <Car size={16} className="text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="text-xs font-semibold text-foreground">
+                                    {booking.assignedVehicle.make} {booking.assignedVehicle.model}
+                                  </p>
+                                  <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
+                                    {booking.assignedVehicle.plateNumber}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       ) : (
-                        <>
-                          <p className="text-xs font-semibold text-foreground">
-                            Assignment in progress...
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            You will receive driver details once confirmed by dispatch.
-                          </p>
-                        </>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Loader2 size={16} className="text-primary animate-spin" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-foreground">
+                              Assignment in progress...
+                            </p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              You will receive driver details once confirmed.
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>

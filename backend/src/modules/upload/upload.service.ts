@@ -37,6 +37,30 @@ export class UploadService {
     });
   }
 
+  async uploadPdfBuffer(buffer: Buffer, filename: string): Promise<{ url: string; filename: string }> {
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'udancabs/receipts',
+          resource_type: 'raw',
+          public_id: filename,
+        },
+        (error, result: UploadApiResponse) => {
+          if (error) {
+            this.logger.error(`Cloudinary upload failed: ${error.message}`);
+            return reject(error);
+          }
+          resolve({
+            url: result.secure_url,
+            filename: result.public_id,
+          });
+        },
+      );
+
+      streamifier.createReadStream(buffer).pipe(uploadStream);
+    });
+  }
+
   async uploadMultipleFiles(files: Express.Multer.File[]): Promise<{ urls: string[] }> {
     const results = await Promise.all(files.map((file) => this.uploadFile(file)));
     return {

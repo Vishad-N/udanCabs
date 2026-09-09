@@ -94,6 +94,19 @@ export class BookingController {
     return this.bookingService.update(id, updateBookingDto);
   }
 
+  @Post(':id/confirm-tour')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Confirm a tour booking and send WhatsApp receipt (Admin)' })
+  @ApiResponse({ status: 200, description: 'Tour confirmed and receipt sent' })
+  confirmTour(
+    @Param('id') id: string,
+    @Body() dto: import('./dto/booking.dto').ConfirmTourBookingDto,
+  ) {
+    return this.bookingService.confirmTour(id, dto);
+  }
+
   @Delete(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)

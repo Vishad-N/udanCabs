@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { tourApi } from '@/lib/api';
-import { X, Loader2, Save } from 'lucide-react';
+import { X, Loader2, Save, Plus, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const tourSchema = z.object({
@@ -15,6 +15,11 @@ const tourSchema = z.object({
   duration: z.string().min(2),
   price: z.number().min(0),
   status: z.string(),
+  carOptions: z.array(z.object({
+    name: z.string().min(1, "Car name is required"),
+    price: z.number().min(0, "Price must be at least 0"),
+    maxPassengers: z.number().min(1, "Must have at least 1 passenger"),
+  })).optional(),
 });
 
 type TourFormValues = z.infer<typeof tourSchema>;
@@ -30,6 +35,7 @@ export function TourModal({ isOpen, onClose, tour }: TourModalProps) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -42,7 +48,13 @@ export function TourModal({ isOpen, onClose, tour }: TourModalProps) {
       duration: '1 Day',
       price: 0,
       status: 'ACTIVE',
+      carOptions: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "carOptions",
   });
 
   useEffect(() => {
@@ -55,6 +67,7 @@ export function TourModal({ isOpen, onClose, tour }: TourModalProps) {
           duration: tour.duration || '',
           price: tour.price || 0,
           status: tour.status || 'ACTIVE',
+          carOptions: tour.carOptions ? (typeof tour.carOptions === 'string' ? JSON.parse(tour.carOptions) : tour.carOptions) : [],
         });
       } else {
         reset({
@@ -64,6 +77,7 @@ export function TourModal({ isOpen, onClose, tour }: TourModalProps) {
           duration: '1 Day',
           price: 0,
           status: 'ACTIVE',
+          carOptions: [],
         });
       }
     }
@@ -152,7 +166,71 @@ export function TourModal({ isOpen, onClose, tour }: TourModalProps) {
               </div>
             </div>
 
-            <div>
+            <div className="pt-4 border-t border-zinc-800/80">
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-sm font-medium text-white">Car Options & Fares</label>
+                <button
+                  type="button"
+                  onClick={() => append({ name: '', price: 0, maxPassengers: 4 })}
+                  className="text-xs bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                >
+                  <Plus size={14} /> Add Car Option
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="flex gap-3 items-start">
+                    <div className="flex-1">
+                      <input
+                        {...register(`carOptions.${index}.name` as const)}
+                        placeholder="Car Name (e.g. Dzire)"
+                        className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-red-500 transition-all"
+                      />
+                      {errors.carOptions?.[index]?.name && (
+                        <p className="mt-1 text-xs text-red-500">{errors.carOptions[index].name?.message}</p>
+                      )}
+                    </div>
+                    <div className="w-32">
+                      <input
+                        type="number"
+                        {...register(`carOptions.${index}.price` as const, { valueAsNumber: true })}
+                        placeholder="Fare (₹)"
+                        className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-red-500 transition-all"
+                      />
+                      {errors.carOptions?.[index]?.price && (
+                        <p className="mt-1 text-xs text-red-500">{errors.carOptions[index].price?.message}</p>
+                      )}
+                    </div>
+                    <div className="w-24">
+                      <input
+                        type="number"
+                        {...register(`carOptions.${index}.maxPassengers` as const, { valueAsNumber: true })}
+                        placeholder="Max Pax"
+                        className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none focus:border-red-500 transition-all"
+                      />
+                      {errors.carOptions?.[index]?.maxPassengers && (
+                        <p className="mt-1 text-xs text-red-500">{errors.carOptions[index].maxPassengers?.message}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="p-2.5 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors mt-0.5"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                {fields.length === 0 && (
+                  <p className="text-xs text-zinc-500 text-center py-4 bg-zinc-900/50 rounded-xl border border-dashed border-zinc-800">
+                    No car options added. Only base price will be available.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-2">
               <label className="block text-xs font-medium text-zinc-400 mb-1">Description *</label>
               <textarea
                 {...register('description')}

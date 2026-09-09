@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { X, User, Phone, Mail, MapPin, Calendar, Clock, Car, CheckCircle2, Circle, AlertCircle, Loader2, Edit3, Send, ShieldAlert, Trash2 } from 'lucide-react';
 import { bookingsApi } from '@/lib/api';
 import { AssignDriverModal } from './AssignDriverModal';
+import { ConfirmTourModal } from './ConfirmTourModal';
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface BookingDetailsModalProps {
 export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: BookingDetailsModalProps) {
   const [loading, setLoading] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isConfirmTourOpen, setIsConfirmTourOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(booking?.status || 'PENDING');
   const [note, setNote] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -219,13 +221,23 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: Book
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
-                  <button
-                    onClick={() => handleStatusUpdate('CONFIRMED')}
-                    disabled={loading || booking.status === 'CONFIRMED'}
-                    className="py-2.5 px-3 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-600/30 text-xs font-bold transition-all disabled:opacity-40"
-                  >
-                    Confirm Ride
-                  </button>
+                  {booking.bookingType === 'TOUR' ? (
+                    <button
+                      onClick={() => setIsConfirmTourOpen(true)}
+                      disabled={loading || booking.status === 'CONFIRMED'}
+                      className="py-2.5 px-3 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-600/30 text-xs font-bold transition-all disabled:opacity-40"
+                    >
+                      Confirm Tour
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleStatusUpdate('CONFIRMED')}
+                      disabled={loading || booking.status === 'CONFIRMED'}
+                      className="py-2.5 px-3 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-600/30 text-xs font-bold transition-all disabled:opacity-40"
+                    >
+                      Confirm Ride
+                    </button>
+                  )}
 
                   <button
                     onClick={() => setIsAssignModalOpen(true)}
@@ -315,6 +327,14 @@ export function BookingDetailsModal({ isOpen, onClose, booking, onUpdate }: Book
 
       </div>
 
+      <ConfirmTourModal
+        isOpen={isConfirmTourOpen}
+        onClose={() => setIsConfirmTourOpen(false)}
+        booking={booking}
+        onSuccess={() => {
+          onUpdate();
+        }}
+      />
       <AssignDriverModal
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}

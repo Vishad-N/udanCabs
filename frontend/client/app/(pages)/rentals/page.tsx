@@ -13,8 +13,13 @@ export default function RentalsPage() {
     const fetchRentals = async () => {
       try {
         const res = await rentalApi.getPublic();
-        // Assuming API returns { data: [...] } for findAll
-        setRentals(res.data || []);
+        if (Array.isArray(res.data)) {
+          setRentals(res.data);
+        } else if (res.data && Array.isArray(res.data.data)) {
+          setRentals(res.data.data);
+        } else {
+          setRentals([]);
+        }
       } catch (err) {
         console.error(err);
       } finally {

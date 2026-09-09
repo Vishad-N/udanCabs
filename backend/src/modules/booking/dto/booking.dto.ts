@@ -6,6 +6,7 @@ import {
   Min,
   IsUUID,
   IsEnum,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -68,12 +69,27 @@ export class CreateBookingDto {
   @IsOptional()
   pickupTime?: string;
 
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  isScheduled?: boolean;
+
+  @ApiPropertyOptional({ example: '2026-09-03T13:00:00.000Z' })
+  @IsString()
+  @IsOptional()
+  scheduledPickupAt?: string;
+
   @ApiPropertyOptional({ example: 4 })
   @IsNumber()
   @IsOptional()
   @Min(1)
   @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : undefined))
   passengers?: number;
+
+  @ApiPropertyOptional({ example: ['Rahul', 'Priya'] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  passengerNames?: string[];
 
   @ApiPropertyOptional({ example: 'Sedan' })
   @IsString()
@@ -255,4 +271,21 @@ export class CancelPublicBookingDto {
   @IsString()
   @IsNotEmpty()
   customerPhone: string;
+}
+
+export class ConfirmTourBookingDto {
+  @ApiPropertyOptional({ example: '2026-07-28' })
+  @IsString()
+  @IsOptional()
+  reportingDate?: string;
+
+  @ApiPropertyOptional({ example: '10:30 AM' })
+  @IsString()
+  @IsOptional()
+  reportingTime?: string;
+
+  @ApiPropertyOptional({ example: 'Mahakal Temple, Ujjain' })
+  @IsString()
+  @IsOptional()
+  reportingPlace?: string;
 }

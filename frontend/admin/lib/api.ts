@@ -1,5 +1,30 @@
 import api from './axios';
 
+export const uploadApi = {
+  uploadSingle: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/uploads/single', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  },
+  uploadMultiple: async (files: FileList | File[]) => {
+    const formData = new FormData();
+    Array.from(files).forEach((file) => {
+      formData.append('files', file);
+    });
+    const res = await api.post('/uploads/multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  },
+};
+
 export const authApi = {
   login: async (credentials: { email: string; password: string }) => {
     const res = await api.post('/auth/login', credentials);
@@ -22,6 +47,10 @@ export const bookingsApi = {
   },
   updateStatus: async (id: string, payload: { status: string; note?: string }) => {
     const res = await api.patch(`/bookings/${id}/status`, payload);
+    return res.data;
+  },
+  confirmTour: async (id: string, payload: { reportingDate?: string; reportingTime?: string; reportingPlace?: string }) => {
+    const res = await api.post(`/bookings/${id}/confirm-tour`, payload);
     return res.data;
   },
   update: async (id: string, payload: any) => {
