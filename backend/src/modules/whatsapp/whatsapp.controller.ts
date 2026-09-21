@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Query, Body, Res, HttpStatus, Logger } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Controller('whatsapp/webhook')
 export class WhatsAppController {
