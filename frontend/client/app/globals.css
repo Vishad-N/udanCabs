@@ -766,3 +766,11 @@
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
+/* Booking modal: 16px inputs stop iOS Safari zooming on focus */
+@media (max-width: 639px) {
+  .booking-modal-body input,
+  .booking-modal-body select,
+  .booking-modal-body textarea {
+    font-size: 16px;
+  }
+}

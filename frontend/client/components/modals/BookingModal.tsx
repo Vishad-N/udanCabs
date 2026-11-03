@@ -270,11 +270,22 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
   };
 
   const handleNextToReview = async () => {
+    // Tours hide the name field and use the first passenger as the booker
+    if (activeTab === 'Tours') {
+      const first = (watch('passengerNames') || [])[0]?.trim();
+      setValue('customerName', first && first.length >= 2 ? first : 'Tour Booker');
+    }
     // Validate form fields before going to review screen
-    handleSubmit(() => {
-      setErrorMsg(null);
-      setStep(4);
-    })();
+    handleSubmit(
+      () => {
+        setErrorMsg(null);
+        setStep(4);
+      },
+      (formErrors) => {
+        const first = Object.values(formErrors)[0] as any;
+        setErrorMsg(first?.message || 'Please fill in all required fields.');
+      },
+    )();
   };
 
   const onFinalSubmit = async (data: BookingFormValues) => {
@@ -340,16 +351,16 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in-0">
-      <div className="relative w-full max-w-3xl rounded-3xl bg-card border border-border/60 p-6 sm:p-8 shadow-2xl text-card-foreground my-8 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-[1100] flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-md sm:p-4 sm:overflow-y-auto animate-in fade-in-0">
+      <div className="relative w-full max-w-3xl rounded-t-3xl sm:rounded-3xl bg-card border border-border/60 px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-8 shadow-2xl text-card-foreground sm:my-8 h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] flex flex-col">
         {/* Header Bar */}
-        <div className="flex items-center justify-between pb-4 border-b border-border/40 shrink-0">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary/20 text-primary uppercase tracking-wider">
+        <div className="flex items-start justify-between gap-3 pb-3 sm:pb-4 border-b border-border/40 shrink-0">
+          <div className="min-w-0">
+            <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+              <span className="whitespace-nowrap text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full bg-primary/20 text-primary uppercase tracking-wider">
                 Step {step} of 4
               </span>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
+              <h2 className="text-lg sm:text-2xl font-black tracking-tight text-foreground leading-tight">
                 {step === 1 && 'Select Route & Locations'}
                 {step === 2 && 'Choose Your Vehicle & Fare'}
                 {step === 3 && 'Passenger & Travel Details'}
@@ -365,7 +376,8 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            aria-label="Close booking"
+            className="shrink-0 -mr-1 flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
           >
             <X size={20} />
           </button>
@@ -387,7 +399,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
         )}
 
         {/* Step Content Area */}
-        <div className="flex-1 overflow-y-auto pt-2 pb-8 pr-1 space-y-6">
+        <div className="booking-modal-body flex-1 min-h-0 overflow-y-auto overscroll-contain pt-2 pb-6 sm:pb-8 sm:pr-1 space-y-6">
           {/* STEP 1: ROUTE & MAP */}
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in-50 duration-200">
@@ -401,7 +413,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+                      className={`flex min-h-11 items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                         isActive
                           ? 'bg-primary text-primary-foreground shadow-md shadow-primary/25 scale-[1.02]'
                           : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
@@ -865,7 +877,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
         </div>
 
         {/* Footer Navigation Controls */}
-        <div className="flex items-center justify-between pt-4 border-t border-border/40 shrink-0 mt-4">
+        <div className="flex items-center justify-between gap-3 pt-3 sm:pt-4 border-t border-border/40 shrink-0 mt-2 sm:mt-4 [&>button]:min-h-11 [&>button:last-child]:flex-1 sm:[&>button:last-child]:flex-none [&>button:last-child]:justify-center">
           {step > 1 ? (
             <button
               type="button"

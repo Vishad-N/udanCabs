@@ -146,7 +146,7 @@ export function ClientAppTour() {
       <button
         type="button"
         onClick={startTour}
-        className="fixed bottom-24 right-4 z-[80] inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card/95 text-foreground shadow-xl backdrop-blur transition hover:border-primary hover:text-primary md:bottom-6"
+        className="fixed bottom-24 right-4 z-[900] inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card/95 text-foreground shadow-xl backdrop-blur transition hover:border-primary hover:text-primary md:bottom-6"
         aria-label="Start application tour"
         title="Start application tour"
       >
@@ -154,7 +154,7 @@ export function ClientAppTour() {
       </button>
 
       {active && (
-        <div className="fixed inset-0 z-[100] pointer-events-none">
+        <div className="fixed inset-0 z-[1210] pointer-events-none">
           {!targetRect && <div className="absolute inset-0 bg-black/65" />}
           {targetRect && (
             <div
