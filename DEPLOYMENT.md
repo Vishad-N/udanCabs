@@ -177,3 +177,15 @@ pm2 install pm2-logrotate
 ```
 
 Verify backend health by visiting `https://api.udancabs.com/api/v1/health`.
+
+---
+
+## Alternative: Render (free tier)
+
+`render.yaml` at the repo root defines the backend web service (root dir `backend`, health check `/api/v1/health`).
+
+1. Render dashboard > New > Blueprint > select this repo. Fill in the `sync: false` env vars (use your Railway values; `DATABASE_URL` must be reachable from Render).
+2. Migrations run automatically on start (`npm run start:prod` runs `prisma migrate deploy`).
+3. Free instances sleep after 15 min idle. Create an UptimeRobot (or cron-job.org) HTTP monitor on
+   `https://<service>.onrender.com/api/v1/health` every 5 minutes to keep it awake.
+4. Add the Render URL to the frontends' API base URL, and add the frontend origins to `ALLOWED_ORIGINS`.
