@@ -59,8 +59,10 @@ export class WhatsAppService {
       this.logger.log(`WhatsApp template '${templateName}' sent to ${to}`);
     } catch (error: any) {
       this.logger.error(
-        `Failed to send WhatsApp template '${templateName}' to ${to}`,
-        error.response?.data || error.message
+        `Failed to send WhatsApp template '${templateName}' to ${to} | sent ${
+          components.reduce((n, c) => n + (c.parameters?.length || 0), 0)
+        } params: ${JSON.stringify(components)}`,
+        JSON.stringify(error.response?.data || error.message)
       );
     }
   }
