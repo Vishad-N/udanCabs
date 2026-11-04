@@ -9,7 +9,7 @@ export const uploadApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return res.data;
+    return res.data?.data ?? res.data;
   },
   uploadMultiple: async (files: FileList | File[]) => {
     const formData = new FormData();
@@ -21,7 +21,7 @@ export const uploadApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 };
 
