@@ -47,9 +47,13 @@ export class WhatsAppController {
         body.entry[0].changes[0].value.statuses &&
         body.entry[0].changes[0].value.statuses[0]
       ) {
-        const status = body.entry[0].changes[0].value.statuses[0].status;
-        const recipientId = body.entry[0].changes[0].value.statuses[0].recipient_id;
-        this.logger.log(`WhatsApp message to ${recipientId} status: ${status}`);
+        const st = body.entry[0].changes[0].value.statuses[0];
+        const line = `WhatsApp message ${st.id} to ${st.recipient_id} status: ${st.status}`;
+        if (st.status === 'failed') {
+          this.logger.error(`${line} | errors: ${JSON.stringify(st.errors)}`);
+        } else {
+          this.logger.log(line);
+        }
       }
       
       // Must return 200 OK to Meta

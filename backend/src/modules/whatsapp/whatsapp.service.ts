@@ -37,7 +37,7 @@ export class WhatsAppService {
     }
 
     try {
-      await axios.post(
+      const resp = await axios.post(
         `https://graph.facebook.com/${this.apiVersion}/${this.phoneId}/messages`,
         {
           messaging_product: 'whatsapp',
@@ -56,7 +56,7 @@ export class WhatsAppService {
           },
         }
       );
-      this.logger.log(`WhatsApp template '${templateName}' sent to ${to}`);
+      this.logger.log(`WhatsApp template '${templateName}' accepted by Meta for ${to}: ${JSON.stringify(resp.data)}`);
     } catch (error: any) {
       this.logger.error(
         `Failed to send WhatsApp template '${templateName}' to ${to} | sent ${
