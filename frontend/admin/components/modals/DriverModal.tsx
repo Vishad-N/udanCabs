@@ -87,9 +87,11 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
         setProfilePhoto(res.url);
         setValue('profilePhoto', res.url, { shouldValidate: true });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to upload image', err);
-      alert('Failed to upload profile photo.');
+      const msg = err?.response?.data?.message || err?.message || 'Unknown error';
+      alert(`Failed to upload profile photo: ${Array.isArray(msg) ? msg.join(', ') : msg}`);
+      e.target.value = '';
     } finally {
       setIsUploading(false);
     }

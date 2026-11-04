@@ -16,12 +16,19 @@ export class WhatsAppService {
   
   private readonly apiVersion = 'v21.0';
 
+  // Meta requires digits only with country code; default 10-digit numbers to India (+91)
+  private normalizePhone(phone: string): string {
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits.length === 10 ? `91${digits}` : digits;
+  }
+
   private async sendTemplateMessage(
     to: string,
     templateName: string,
     components: any[] = [],
     languageCode: string = 'en'
   ) {
+    to = this.normalizePhone(to);
     if (!this.token || !this.phoneId) {
       this.logger.warn(
         `[MOCK WHATSAPP TEMPLATE] To ${to} | Template: ${templateName} | Components: ${JSON.stringify(components)}`

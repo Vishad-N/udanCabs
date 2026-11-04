@@ -410,10 +410,13 @@ export class BookingService {
 
     // Upload PDF to Cloudinary
     const filename = `receipt_${updated.bookingNumber}_${Date.now()}.pdf`;
-    const uploadResult = await this.uploadService.uploadPdfBuffer(pdfBuffer, filename);
-
-    // Send WhatsApp notification
-    await this.whatsappService.notifyCustomerTourConfirmed(updated, uploadResult.url);
+    try {
+      const uploadResult = await this.uploadService.uploadPdfBuffer(pdfBuffer, filename);
+      // Send WhatsApp notification
+      await this.whatsappService.notifyCustomerTourConfirmed(updated, uploadResult.url);
+    } catch (err: any) {
+      console.error('Receipt upload / WhatsApp send failed', err?.message || err);
+    }
 
     return this.parseBooking(updated);
   }
