@@ -20,8 +20,19 @@ async function bootstrap() {
     ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
     : ['http://localhost:3000', 'http://localhost:3001'];
     
+  // Allow both the www and non-www variant of every configured origin
+  const corsOrigins = new Set<string>();
+  for (const o of allowedOrigins) {
+    const clean = o.replace(/\/+$/, '');
+    corsOrigins.add(clean);
+    if (!/localhost|127\.0\.0\.1/.test(clean)) {
+      const m = clean.match(/^(https?:\/\/)(www\.)?(.+)$/);
+      if (m) corsOrigins.add(`${m[1]}${m[2] ? '' : 'www.'}${m[3]}`);
+    }
+  }
+
   app.enableCors({
-    origin: allowedOrigins,
+    origin: Array.from(corsOrigins),
     credentials: true,
   });
 

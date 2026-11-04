@@ -426,7 +426,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                 })}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={activeTab === 'Tours' ? 'hidden' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
                 {activeTab === 'Tours' ? null : (
                   <LocationAutocomplete
                     label={activeTab === 'Airport' ? 'Pickup Address in Ujjain / Indore' : 'Pickup Location *'}
@@ -488,7 +488,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                       <p className="text-sm text-muted-foreground max-w-sm">Stay tuned packages will be available soon in your area!</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start p-1 -m-1">
                       {tourPackages.map((tour) => {
                         const carOptions = tour.carOptions ? (typeof tour.carOptions === 'string' ? JSON.parse(tour.carOptions) : tour.carOptions) : [];
                         const isSelected = selectedTourPackage?.id === tour.id;
@@ -497,7 +497,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                         return (
                           <div 
                             key={tour.id} 
-                            className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all flex flex-col relative ${isSelected ? 'bg-primary/5 border-primary ring-1 ring-primary shadow-lg scale-[1.02] z-10' : 'bg-card border-border/60 hover:border-border hover:bg-secondary/30'}`}
+                            className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all flex flex-col relative ${isSelected ? 'bg-primary/5 border-primary ring-1 ring-primary shadow-lg z-10' : 'bg-card border-border/60 hover:border-border hover:bg-secondary/30'}`}
                             onClick={() => {
                               setSelectedTourPackage(tour);
                               if (carOptions.length > 0) setSelectedTourCar(carOptions[0]);
@@ -605,7 +605,7 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                         onClick={() => setSelectedVehicle(veh)}
                         className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all flex flex-col relative ${
                           isSelected
-                            ? 'bg-primary/5 border-primary ring-1 ring-primary shadow-lg scale-[1.02] z-10'
+                            ? 'bg-primary/5 border-primary ring-1 ring-primary shadow-lg z-10'
                             : 'bg-card border-border/60 hover:border-border hover:bg-secondary/30'
                         }`}
                       >
