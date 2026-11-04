@@ -35,6 +35,7 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<DriverFormValues>({
     resolver: zodResolver(driverSchema),
@@ -45,6 +46,7 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
       emergencyContact: '',
       address: '',
       status: 'ACTIVE',
+      profilePhoto: '',
     },
   });
 
@@ -83,6 +85,7 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
       const res = await uploadApi.uploadSingle(e.target.files[0]);
       if (res?.url) {
         setProfilePhoto(res.url);
+        setValue('profilePhoto', res.url, { shouldValidate: true });
       }
     } catch (err) {
       console.error('Failed to upload image', err);
@@ -209,7 +212,10 @@ export function DriverModal({ isOpen, onClose, driver }: DriverModalProps) {
                     <img src={profilePhoto} alt="Profile" className="object-cover w-full h-full" />
                     <button
                       type="button"
-                      onClick={() => setProfilePhoto('')}
+                      onClick={() => {
+                        setProfilePhoto('');
+                        setValue('profilePhoto', '', { shouldValidate: true });
+                      }}
                       className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
                     >
                       <X size={16} className="text-white" />
