@@ -42,9 +42,22 @@ const bookingSchema = z.object({
   rentalDuration: z.string().optional(),
   licenseNumber: z.string().optional(),
   notes: z.string().optional(),
+  vehicleRequestOption: z.string().optional(),
+  vehicleRequestCustom: z.string().max(150, 'Vehicle request is too long (max 150 characters)').optional(),
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
+
+const VEHICLE_REQUEST_OPTIONS = [
+  { value: 'Tempo Traveller', label: 'Tempo Traveller (12-17 seater)' },
+  { value: 'Toyota Innova / Innova Crysta', label: 'Toyota Innova / Innova Crysta (6-7 seater)' },
+];
+
+// Combines the dropdown choice and the free-text box into one string for the backend/admin
+const buildRequestedVehicle = (option?: string, custom?: string) => {
+  const parts = [option?.trim(), custom?.trim()].filter(Boolean) as string[];
+  return parts.length ? parts.join(' - ') : undefined;
+};
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -123,11 +136,16 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
       rentalDuration: '1 Day',
       licenseNumber: '',
       notes: '',
+      vehicleRequestOption: '',
+      vehicleRequestCustom: '',
     },
   });
 
   const watchPickupTime = watch('pickupTime');
   const watchPassengers = watch('passengers');
+  const watchVehicleOption = watch('vehicleRequestOption');
+  const watchVehicleCustom = watch('vehicleRequestCustom');
+  const requestedVehicle = buildRequestedVehicle(watchVehicleOption, watchVehicleCustom);
 
   // Sync initial tab & data when opened
   useEffect(() => {
@@ -306,8 +324,10 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
         finalScheduledPickupAt = finalDate.toISOString();
       }
 
+      const { vehicleRequestOption, vehicleRequestCustom, ...formData } = data;
       const payload = {
-        ...data,
+        ...formData,
+        requestedVehicle: buildRequestedVehicle(vehicleRequestOption, vehicleRequestCustom),
         customerName: activeTab === 'Tours' ? (data.passengerNames?.[0] || 'Tour Booker') : data.customerName,
         passengerNames: activeTab === 'Tours' ? data.passengerNames : [],
         bookingType: getBookingTypeEnum(activeTab),
@@ -773,6 +793,46 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                 </div>
               )}
 
+              <div className="rounded-2xl border border-border/60 bg-secondary/30 p-4 space-y-3">
+                <div>
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Car size={16} className="text-primary" /> Larger group or a specific vehicle?
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Optional. Tell us if you are travelling with more people or want a particular vehicle - our team will confirm availability.
+                  </p>
+                </div>
+                {(watchPassengers || 0) >= (activeTab === 'Tours' ? (selectedTourCar?.maxPassengers || 4) : 6) && !requestedVehicle && (
+                  <p className="text-[11px] rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 px-3 py-2">
+                    Travelling with more than {watchPassengers} people? Choose a Tempo Traveller below.
+                  </p>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Preferred vehicle</label>
+                    <select
+                      {...register('vehicleRequestOption')}
+                      className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                    >
+                      <option value="">No preference</option>
+                      {VEHICLE_REQUEST_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Any other vehicle / group size</label>
+                    <input
+                      {...register('vehicleRequestCustom')}
+                      maxLength={150}
+                      placeholder="e.g. 20 people, need a mini bus"
+                      className="w-full rounded-xl border border-border bg-input/50 px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                    />
+                    {errors.vehicleRequestCustom && <p className="mt-1 text-xs text-destructive">{errors.vehicleRequestCustom.message}</p>}
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">Special Notes / Instructions</label>
                 <textarea
@@ -857,6 +917,13 @@ export function BookingModal({ isOpen, onClose, initialTab = 'Cab', initialData,
                         <span className="font-semibold text-foreground">{routeInfo?.distanceKm || 15} KM (~{routeInfo?.durationText || '30 Min'})</span>
                       </div>
                     </>
+                  )}
+                  {requestedVehicle && (
+                    <div className="sm:col-span-2">
+                      <span className="text-muted-foreground block">Requested Vehicle:</span>
+                      <span className="font-semibold text-amber-500">{requestedVehicle}</span>
+                      <span className="block text-[10px] text-muted-foreground">Our team will confirm availability before assigning.</span>
+                    </div>
                   )}
                   <div>
                     <span className="text-muted-foreground block">Travel Date & Time:</span>

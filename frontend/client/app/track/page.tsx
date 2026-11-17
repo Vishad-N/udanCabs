@@ -202,6 +202,11 @@ function TrackBookingContent() {
                       <p className="text-xs text-muted-foreground">
                         Category: <span className="font-medium text-foreground">{booking.vehicleCategory || 'Sedan'}</span>
                       </p>
+                      {booking.requestedVehicle && (
+                        <p className="text-xs text-muted-foreground">
+                          Requested Vehicle: <span className="font-medium text-amber-500">{booking.requestedVehicle}</span>
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         Total Fare: <span className="font-medium text-foreground">₹{booking.totalFare || booking.estimatedFare}</span>
                       </p>

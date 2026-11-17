@@ -118,6 +118,11 @@ export function BookingConfirmationModal({ isOpen, onClose, booking }: BookingCo
               <p className="text-xs text-muted-foreground">
                 Category: <span className="font-medium text-foreground">{booking.vehicleCategory || 'Sedan (4 Seater)'}</span>
               </p>
+              {booking.requestedVehicle && (
+                <p className="text-xs text-muted-foreground">
+                  Requested Vehicle: <span className="font-medium text-amber-500">{booking.requestedVehicle}</span>
+                </p>
+              )}
               {booking.passengers && (
                 <p className="text-xs text-muted-foreground">Passengers: {booking.passengers}</p>
               )}
